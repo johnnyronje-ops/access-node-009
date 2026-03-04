@@ -1,187 +1,288 @@
-:root{
-  --bg:#050607;
-  --fg:#e8e1cf;
-  --accent:#caa24a; /* Registry Gold */
-  --muted:rgba(232,225,207,.65);
-  --panel:rgba(255,255,255,.03);
-  --stroke:rgba(202,162,74,.25);
-  --ok:#76ffb4;
-  --danger:#ff5b5b;
+const KEY = "an009_standing_v1";
+const THEME_KEY = "an009_theme";
+const COUNT_KEY = "an009_verified_count";
+
+const statusPill = document.getElementById("statusPill");
+const terminalOut = document.getElementById("terminalOut");
+const verifyBtn = document.getElementById("verifyBtn");
+const resetBtn = document.getElementById("resetBtn");
+
+const form = document.getElementById("verifyForm");
+const subjectName = document.getElementById("subjectName");
+const caseTag = document.getElementById("caseTag");
+const consentCheck = document.getElementById("consentCheck");
+const formError = document.getElementById("formError");
+
+const canvas = document.getElementById("idCanvas");
+const downloadBtn = document.getElementById("downloadBtn");
+
+const themeToggle = document.getElementById("themeToggle");
+const counterEl = document.getElementById("counter");
+
+const TRACK_EMBEDS = {
+  intake: { html: `<div class="tiny muted">Embed placeholder. Replace with Spotify/Bandcamp embed.</div>` },
+  containment: { html: `<div class="tiny muted">Embed placeholder.</div>` },
+  signature: { html: `<div class="tiny muted">Embed placeholder.</div>` },
+};
+
+function getStanding() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
-body.euonia{
-  --bg:#f6f7fb;
-  --fg:#0b0d12;
-  --accent:#e9eefc; /* Euonia White */
-  --muted:rgba(11,13,18,.65);
-  --panel:rgba(0,0,0,.04);
-  --stroke:rgba(0,0,0,.18);
+function setStanding({ name, caseTag }) {
+  const payload = {
+    verified: true,
+    name: (name || "").trim(),
+    caseTag: (caseTag || "").trim(),
+    issuedAt: new Date().toISOString(),
+    id: `ACCESS-NODE-009/${Math.random().toString(16).slice(2, 10).toUpperCase()}`
+  };
+  localStorage.setItem(KEY, JSON.stringify(payload));
+  return payload;
 }
 
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  background:var(--bg);
-  color:var(--fg);
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+function clearStanding() {
+  localStorage.removeItem(KEY);
 }
 
-.scanlines{
-  position:fixed; inset:0;
-  pointer-events:none;
-  background:repeating-linear-gradient(
-    to bottom,
-    rgba(255,255,255,.03),
-    rgba(255,255,255,.03) 1px,
-    rgba(0,0,0,0) 3px,
-    rgba(0,0,0,0) 6px
-  );
-  mix-blend-mode:overlay;
-  opacity:.16;
+function setStatus(verified) {
+  statusPill.textContent = verified ? "STANDING: VERIFIED" : "STANDING: UNVERIFIED";
+  statusPill.style.borderColor = verified ? "var(--ok)" : "var(--stroke)";
 }
 
-.topbar{
-  position:sticky; top:0;
-  display:flex; justify-content:space-between; align-items:center;
-  padding:14px 18px;
-  border-bottom:1px solid var(--stroke);
-  background:linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,0));
-  backdrop-filter:blur(8px);
+function setTerminal(text) {
+  terminalOut.textContent = text;
 }
 
-.brand{display:flex; gap:12px; align-items:center}
-.dot{
-  width:12px; height:12px; border-radius:50%;
-  background:var(--accent);
-  box-shadow:0 0 20px var(--accent);
-}
-.title{font-weight:900; letter-spacing:.08em}
-.sub{font-size:12px; color:var(--muted); letter-spacing:.06em}
-
-.nav{display:flex; gap:10px; flex-wrap:wrap}
-.chip{
-  text-decoration:none;
-  color:var(--fg);
-  border:1px solid var(--stroke);
-  padding:8px 10px;
-  border-radius:999px;
-  background:rgba(255,255,255,.02);
-  font-size:12px;
-  letter-spacing:.08em;
+function scanLines(name) {
+  const n = (name || "UNKNOWN").toUpperCase();
+  return [
+    "REG-U / SCAN / INIT",
+    `SUBJECT / NAME / PARSE → ${n}`,
+    "CONSENT / CHECKSUM / VALIDATE",
+    "STANDING / LEDGER / QUERY",
+    "AUTHORITY / CLAIM / NULL",
+    "RESULT: STANDING VERIFIED",
+    "STAMP: FILE ACCEPTED"
+  ];
 }
 
-.wrap{max-width:1100px; margin:0 auto; padding:18px}
-.panel{
-  border:1px solid var(--stroke);
-  background:var(--panel);
-  border-radius:14px;
-  padding:18px;
-  margin:18px 0;
+async function runScan(name) {
+  const lines = scanLines(name);
+  setTerminal("");
+  for (const line of lines) {
+    setTerminal(terminalOut.textContent + line + "\n");
+    await new Promise(r => setTimeout(r, 140));
+  }
 }
 
-h1{margin:0 0 6px}
-h2{margin:0 0 10px; letter-spacing:.08em}
-.muted{color:var(--muted)}
-.tiny{font-size:12px}
-
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:16px;
-  margin-top:14px;
-}
-@media (max-width:900px){ .grid{grid-template-columns:1fr} }
-
-.card{
-  border:1px solid var(--stroke);
-  border-radius:14px;
-  padding:14px;
-  background:rgba(255,255,255,.02);
+function isUnlocked(unlockISO) {
+  if (!unlockISO) return true;
+  const now = new Date();
+  const unlockDate = new Date(unlockISO);
+  return now >= unlockDate;
 }
 
-.pill{
-  display:inline-block;
-  margin:10px 0 12px;
-  padding:8px 10px;
-  border-radius:999px;
-  border:1px solid var(--stroke);
-  font-size:12px;
-  letter-spacing:.08em;
+function lockMessage() {
+  return `ERROR: JURISDICTION NOT YET ESTABLISHED.\nCOMPLIANCE REQUIRED.`;
 }
 
-.terminal{
-  border:1px solid var(--stroke);
-  border-radius:12px;
-  background:rgba(0,0,0,.35);
-  padding:12px;
-  min-height:130px;
-}
-body.euonia .terminal{background:rgba(0,0,0,.06)}
-pre{
-  margin:0;
-  white-space:pre-wrap;
-  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
-  font-size:12px;
-  line-height:1.35;
+function setCounter() {
+  const count = Number(localStorage.getItem(COUNT_KEY) || "0");
+  counterEl.textContent = String(count);
 }
 
-.row{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
-.btn{
-  border:1px solid var(--stroke);
-  background:rgba(255,255,255,.03);
-  color:var(--fg);
-  border-radius:12px;
-  padding:10px 12px;
-  letter-spacing:.06em;
-  cursor:pointer;
-}
-.btn:hover{transform:translateY(-1px)}
-.btn:disabled{opacity:.55; cursor:not-allowed; transform:none}
-.btn.ghost{background:transparent}
-.btn.play{width:100%; text-align:left}
-
-.form{display:flex; flex-direction:column; gap:10px}
-label{display:flex; flex-direction:column; gap:6px; font-size:12px; letter-spacing:.08em}
-input{
-  padding:10px 12px;
-  border-radius:12px;
-  border:1px solid var(--stroke);
-  background:rgba(0,0,0,.25);
-  color:var(--fg);
-  outline:none;
-}
-body.euonia input{background:rgba(255,255,255,.65)}
-.checkline{flex-direction:row; align-items:center; gap:10px; letter-spacing:.06em}
-.error{min-height:18px; color:var(--danger); font-size:12px}
-
-.idwrap{margin-top:14px}
-canvas{
-  width:100%;
-  border-radius:14px;
-  border:1px solid var(--stroke);
-  background:rgba(0,0,0,.15);
+function bumpCounter() {
+  const count = Number(localStorage.getItem(COUNT_KEY) || "0") + 1;
+  localStorage.setItem(COUNT_KEY, String(count));
+  setCounter();
 }
 
-.tracks{display:flex; flex-direction:column; gap:14px; margin-top:14px}
-.track{
-  border:1px solid var(--stroke);
-  border-radius:14px;
-  padding:14px;
-  background:rgba(255,255,255,.02);
-}
-.track-head{display:flex; justify-content:space-between; align-items:baseline; gap:10px}
-.track-title{font-weight:900; letter-spacing:.08em}
+function unlockButtons() {
+  const standing = getStanding();
+  const verified = !!standing?.verified;
 
-.embed{
-  margin-top:12px;
-  display:none;
-  border-top:1px dashed var(--stroke);
-  padding-top:12px;
+  document.querySelectorAll(".btn.play").forEach((btn) => {
+    const unlockISO = btn.getAttribute("data-unlock") || "";
+    if (!verified) {
+      btn.textContent = "LOCKED — JURISDICTION NOT YET ESTABLISHED";
+      return;
+    }
+    if (!isUnlocked(unlockISO)) {
+      btn.textContent = "LOCKED — COMPLIANCE REQUIRED (DATE LOCK)";
+      return;
+    }
+    const track = btn.getAttribute("data-track") || "TRACK";
+    btn.textContent = `PLAY / ${track.toUpperCase()} — ACCESS GRANTED`;
+  });
 }
 
-.footer{
-  display:flex; justify-content:space-between; gap:10px;
-  padding-top:14px; margin-top:14px;
-  border-top:1px solid var(--stroke);
+function drawId(standing) {
+  const ctx = canvas.getContext("2d");
+
+  const css = getComputedStyle(document.body);
+  const bg = css.getPropertyValue("--bg").trim() || "#050607";
+  const fg = css.getPropertyValue("--fg").trim() || "#e8e1cf";
+  const accent = css.getPropertyValue("--accent").trim() || "#caa24a";
+  const muted = css.getPropertyValue("--muted").trim() || "rgba(232,225,207,.65)";
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // scan wash
+  ctx.fillStyle = "rgba(255,255,255,0.03)";
+  for (let y = 0; y < canvas.height; y += 6) ctx.fillRect(0, y, canvas.width, 1);
+
+  // border
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 6;
+  ctx.strokeRect(24, 24, canvas.width - 48, canvas.height - 48);
+
+  // header
+  ctx.fillStyle = fg;
+  ctx.font = "800 44px system-ui";
+  ctx.fillText("REG-U / STANDING", 60, 110);
+
+  ctx.fillStyle = muted;
+  ctx.font = "20px ui-monospace, Menlo, Monaco, Consolas, 'Courier New', monospace";
+  ctx.fillText("ACCESS-NODE-009 / ID ISSUANCE", 60, 145);
+
+  // subject
+  ctx.fillStyle = fg;
+  ctx.font = "700 34px system-ui";
+  ctx.fillText(`SUBJECT: ${(standing.name || "UNKNOWN").toUpperCase()}`, 60, 220);
+
+  // case tag
+  ctx.fillStyle = muted;
+  ctx.font = "22px ui-monospace, Menlo, Monaco, Consolas, 'Courier New', monospace";
+  ctx.fillText(`CASE: ${(standing.caseTag || "REG-U / INTAKE / SUBJECT").toUpperCase()}`, 60, 265);
+
+  // stamp
+  ctx.save();
+  ctx.translate(650, 360);
+  ctx.rotate((-12 * Math.PI) / 180);
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 5;
+  ctx.strokeRect(-210, -70, 420, 140);
+  ctx.fillStyle = accent;
+  ctx.font = "900 34px system-ui";
+  ctx.fillText("STANDING", -160, -10);
+  ctx.fillText("VERIFIED", -150, 40);
+  ctx.restore();
+
+  // id + date
+  ctx.fillStyle = fg;
+  ctx.font = "22px ui-monospace, Menlo, Monaco, Consolas, 'Courier New', monospace";
+  ctx.fillText(`ID: ${standing.id}`, 60, 420);
+  ctx.fillStyle = muted;
+  ctx.fillText(`ISSUED: ${new Date(standing.issuedAt).toLocaleString()}`, 60, 455);
+
+  downloadBtn.disabled = false;
 }
+
+function downloadId(name) {
+  const a = document.createElement("a");
+  a.download = `standing-id-${(name || "subject").replace(/\s+/g, "-")}.png`;
+  a.href = canvas.toDataURL("image/png");
+  a.click();
+}
+
+/* Theme */
+(function initTheme(){
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved === "euonia") document.body.classList.add("euonia");
+})();
+themeToggle.addEventListener("click", (e) => {
+  e.preventDefault();
+  document.body.classList.toggle("euonia");
+  localStorage.setItem(THEME_KEY, document.body.classList.contains("euonia") ? "euonia" : "registry");
+  const standing = getStanding();
+  if (standing?.verified) drawId(standing);
+});
+
+/* Buttons */
+verifyBtn.addEventListener("click", async () => {
+  const name = subjectName.value.trim() || "UNKNOWN";
+  await runScan(name);
+});
+
+resetBtn.addEventListener("click", () => {
+  clearStanding();
+  setStatus(false);
+  setTerminal("REG-U / SCAN / IDLE");
+  downloadBtn.disabled = true;
+  unlockButtons();
+});
+
+/* Form */
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  formError.textContent = "";
+
+  const name = subjectName.value.trim();
+  const tag = caseTag.value.trim();
+  const consent = consentCheck.checked;
+
+  if (!name) { formError.textContent = "ERROR: SUBJECT NAME REQUIRED."; return; }
+  if (!consent) { formError.textContent = "ERROR: CONSENT REQUIRED."; return; }
+
+  await runScan(name);
+  const standing = setStanding({ name, caseTag: tag });
+  bumpCounter();
+
+  setStatus(true);
+  drawId(standing);
+  unlockButtons();
+});
+
+/* Download */
+downloadBtn.addEventListener("click", () => {
+  const standing = getStanding();
+  if (!standing?.verified) return;
+  downloadId(standing.name);
+});
+
+/* Music play */
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".btn.play");
+  if (!btn) return;
+
+  const standing = getStanding();
+  if (!standing?.verified) { setTerminal(lockMessage()); return; }
+
+  const unlockISO = btn.getAttribute("data-unlock") || "";
+  if (!isUnlocked(unlockISO)) {
+    setTerminal("ERROR: JURISDICTION NOT YET ESTABLISHED.\nDATE LOCK ACTIVE.");
+    return;
+  }
+
+  const track = btn.getAttribute("data-track");
+  const embed = document.querySelector(`[data-embed="${track}"]`);
+  embed.style.display = "block";
+  embed.innerHTML = (TRACK_EMBEDS[track] && TRACK_EMBEDS[track].html) || `<div class="tiny muted">No embed configured.</div>`;
+
+  setTerminal(`ACCESS GRANTED → ${(track || "TRACK").toUpperCase()}\nFILE ACCEPTED.`);
+});
+
+/* Init */
+(function init(){
+  setCounter();
+  const standing = getStanding();
+  const verified = !!standing?.verified;
+  setStatus(verified);
+
+  if (verified) {
+    setTerminal(`REG-U / SCAN / RESUME\nSUBJECT: ${(standing.name||"UNKNOWN").toUpperCase()}\nSTATUS: STANDING VERIFIED\nSTAMP: FILE ACCEPTED`);
+    drawId(standing);
+  } else {
+    setTerminal("REG-U / SCAN / IDLE");
+  }
+
+  unlockButtons();
+})();
