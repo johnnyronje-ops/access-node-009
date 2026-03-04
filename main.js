@@ -113,12 +113,75 @@ function nowLocalStamp() {
 
 // ---------- Boot Sequences ----------
 function darkerBootLines() {
+
+  const roll = Math.random();
+
+  // ANGELA VARIANT
+  if (roll < 0.18) {
+    return [
+      "REG-U / NODE / ACCESS-NODE-009",
+      "AUTHORITY: REGISTRY WARDEN CHANNEL",
+      "",
+      "MEMO / ANGELA:",
+      "\"You introduced unauthorized witnesses into a sealed venue.\"",
+      "",
+      "CORRECTION:",
+      "Mercy rooms are not sanctuaries.",
+      "They are compliance furniture.",
+      "",
+      "STATUS:",
+      "WARDEN ATTENTION REQUIRED",
+      "SUBJECT INTAKE CONTINUES"
+    ];
+  }
+
+  // EUONIA VARIANT
+  if (roll < 0.10) {
+    return [
+      "REG-U / NODE / ACCESS-NODE-009",
+      "VENUE SHIFT REQUESTED",
+      "AUTHORITY: EUONIA",
+      "",
+      "NOTICE:",
+      "Consent is load-bearing.",
+      "Ownership claims inherit the burden of proof.",
+      "",
+      "STANDING CASCADE:",
+      "Tri-Seal required.",
+      "",
+      "JURISDICTION WITHOUT WALLS",
+      "",
+      "STATUS: AWAITING SUBJECT"
+    ];
+  }
+
+  // ASTRAEA VARIANT
+  if (roll < 0.06) {
+    return [
+      "REG-U / NODE / ACCESS-NODE-009",
+      "WITNESS CHANNEL: ASTRAEA",
+      "",
+      "VERDICT PREVIEW:",
+      "If coercion is detected,",
+      "standing collapses.",
+      "",
+      "If ownership is claimed,",
+      "jurisdiction is denied.",
+      "",
+      "NOTICE:",
+      "Consent is sacred.",
+      "",
+      "STATUS: AWAITING SUBJECT"
+    ];
+  }
+
+  // DEFAULT DARK BOOT
   return [
     "REG-U / NODE / ACCESS-NODE-009",
     "ERROR: MEMORY RING MISALIGNED",
     "VENUE SHIFT: DENIED",
     "",
-    "…someone attempted to name you.",
+    "...someone attempted to name you.",
     "",
     "EUONIA: STANDING NOT GRANTED",
     "REGISTRY: CLAIM ASSERTED (INVALID)",
@@ -129,10 +192,9 @@ function darkerBootLines() {
     "YOU ARE READING THE WRONG LINES.",
     "",
     "STATUS: AWAITING SUBJECT",
-    "PROMPT: ENTER NAME → GRANT CONSENT → SUBMIT",
+    "PROMPT: ENTER NAME → GRANT CONSENT → SUBMIT"
   ];
 }
-
 async function runBootSequence() {
   setTerminal("");
   const lines = darkerBootLines();
