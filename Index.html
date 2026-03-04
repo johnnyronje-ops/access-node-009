@@ -1,1 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ACCESS-NODE-009</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="scanlines" aria-hidden="true"></div>
 
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      <div>
+        <div class="title">ACCESS-NODE-009</div>
+        <div class="sub">REG-U / INTAKE / SUBJECT STATUS: PENDING</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="chip" href="#" id="themeToggle" title="Flip theme">WE STAYED</a>
+      <a class="chip" href="#verify">VERIFY</a>
+      <a class="chip" href="#music">MUSIC</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section class="panel">
+      <h1>Registry Standing Portal</h1>
+      <p class="muted">
+        Fictional verification interface. No passwords requested. No server storage. Standing is stored locally on this device.
+      </p>
+
+      <div class="grid">
+        <div class="card">
+          <h2>STATUS</h2>
+          <div id="statusPill" class="pill">STANDING: UNVERIFIED</div>
+
+          <div class="terminal" role="region" aria-label="Terminal output">
+            <pre id="terminalOut">REG-U / SCAN / IDLE</pre>
+          </div>
+
+          <div class="row">
+            <button class="btn" id="verifyBtn">VERIFY STANDING</button>
+            <button class="btn ghost" id="resetBtn" title="Clears local standing token">RESET</button>
+          </div>
+
+          <div class="tiny muted">
+            Note: This gate is theater + pacing, not security. Keep it cinematic.
+          </div>
+        </div>
+
+        <div class="card" id="verify">
+          <h2>SUBJECT INTAKE</h2>
+
+          <form id="verifyForm" class="form">
+            <label>
+              SUBJECT NAME
+              <input id="subjectName" type="text" placeholder="e.g., Johnny" autocomplete="off" required />
+            </label>
+
+            <label>
+              CASE TAG (OPTIONAL)
+              <input id="caseTag" type="text" placeholder="REG-U / INTAKE / 0009" autocomplete="off" />
+            </label>
+
+            <label class="checkline">
+              <input id="consentCheck" type="checkbox" />
+              CONSENT GRANTED (REQUIRED)
+            </label>
+
+            <button class="btn" type="submit">SUBMIT FOR VERIFICATION</button>
+            <div id="formError" class="error" aria-live="polite"></div>
+          </form>
+
+          <div class="idwrap">
+            <canvas id="idCanvas" width="900" height="540"></canvas>
+            <div class="row">
+              <button class="btn ghost" id="downloadBtn" disabled>DOWNLOAD ID</button>
+            </div>
+            <div class="tiny muted">ID is generated locally (Canvas). Nothing is uploaded.</div>
+          </div>
+
+          <!-- BLOOMHOUSE SCRAP: EG-013 / "Beauty is not permission." -->
+          <!-- BLOOMHOUSE SCRAP: NG-012 / "Standing: Conditional." -->
+          <!-- MESSAGE (ASTRAEA): Consent is load-bearing. Everything else is decoration. -->
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="music">
+      <h2>MUSIC ACCESS</h2>
+      <p class="muted">Tracks unlock after Standing Verified. (We’ll swap these placeholders for Spotify/Bandcamp embeds.)</p>
+
+      <div class="tracks">
+        <div class="track">
+          <div class="track-head">
+            <div class="track-title">EP I / INTAKE</div>
+            <div class="tiny muted">Unlocked after verification</div>
+          </div>
+          <button class="btn play" data-track="intake" data-unlock="">
+            LOCKED — JURISDICTION NOT YET ESTABLISHED
+          </button>
+          <div class="embed" data-embed="intake"></div>
+        </div>
+
+        <div class="track">
+          <div class="track-head">
+            <div class="track-title">EP II / CONTAINMENT</div>
+            <div class="tiny muted">Unlocked after verification (we’ll add the “leak” later)</div>
+          </div>
+          <button class="btn play" data-track="containment" data-unlock="">
+            LOCKED — SIGNATURE REQUIRED
+          </button>
+          <div class="embed" data-embed="containment"></div>
+        </div>
+
+        <div class="track">
+          <div class="track-head">
+            <div class="track-title">EP III / SIGNATURE REQUIRED</div>
+            <div class="tiny muted">Date-locked example</div>
+          </div>
+          <button class="btn play" data-track="signature" data-unlock="2026-04-01T00:00:00-06:00">
+            LOCKED — COMPLIANCE REQUIRED
+          </button>
+          <div class="embed" data-embed="signature"></div>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <div class="tiny muted">COUNTER: <span id="counter">0</span> VERIFIED SUBJECTS (LOCAL)</div>
+        <div class="tiny muted">REG-U / FILE ACCEPTED</div>
+      </footer>
+    </section>
+  </main>
+
+  <script src="./main.js"></script>
+</body>
+</html>
