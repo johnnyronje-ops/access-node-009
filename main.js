@@ -1,1 +1,187 @@
+:root{
+  --bg:#050607;
+  --fg:#e8e1cf;
+  --accent:#caa24a; /* Registry Gold */
+  --muted:rgba(232,225,207,.65);
+  --panel:rgba(255,255,255,.03);
+  --stroke:rgba(202,162,74,.25);
+  --ok:#76ffb4;
+  --danger:#ff5b5b;
+}
 
+body.euonia{
+  --bg:#f6f7fb;
+  --fg:#0b0d12;
+  --accent:#e9eefc; /* Euonia White */
+  --muted:rgba(11,13,18,.65);
+  --panel:rgba(0,0,0,.04);
+  --stroke:rgba(0,0,0,.18);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--fg);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+}
+
+.scanlines{
+  position:fixed; inset:0;
+  pointer-events:none;
+  background:repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,.03),
+    rgba(255,255,255,.03) 1px,
+    rgba(0,0,0,0) 3px,
+    rgba(0,0,0,0) 6px
+  );
+  mix-blend-mode:overlay;
+  opacity:.16;
+}
+
+.topbar{
+  position:sticky; top:0;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:14px 18px;
+  border-bottom:1px solid var(--stroke);
+  background:linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,0));
+  backdrop-filter:blur(8px);
+}
+
+.brand{display:flex; gap:12px; align-items:center}
+.dot{
+  width:12px; height:12px; border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 20px var(--accent);
+}
+.title{font-weight:900; letter-spacing:.08em}
+.sub{font-size:12px; color:var(--muted); letter-spacing:.06em}
+
+.nav{display:flex; gap:10px; flex-wrap:wrap}
+.chip{
+  text-decoration:none;
+  color:var(--fg);
+  border:1px solid var(--stroke);
+  padding:8px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.02);
+  font-size:12px;
+  letter-spacing:.08em;
+}
+
+.wrap{max-width:1100px; margin:0 auto; padding:18px}
+.panel{
+  border:1px solid var(--stroke);
+  background:var(--panel);
+  border-radius:14px;
+  padding:18px;
+  margin:18px 0;
+}
+
+h1{margin:0 0 6px}
+h2{margin:0 0 10px; letter-spacing:.08em}
+.muted{color:var(--muted)}
+.tiny{font-size:12px}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  margin-top:14px;
+}
+@media (max-width:900px){ .grid{grid-template-columns:1fr} }
+
+.card{
+  border:1px solid var(--stroke);
+  border-radius:14px;
+  padding:14px;
+  background:rgba(255,255,255,.02);
+}
+
+.pill{
+  display:inline-block;
+  margin:10px 0 12px;
+  padding:8px 10px;
+  border-radius:999px;
+  border:1px solid var(--stroke);
+  font-size:12px;
+  letter-spacing:.08em;
+}
+
+.terminal{
+  border:1px solid var(--stroke);
+  border-radius:12px;
+  background:rgba(0,0,0,.35);
+  padding:12px;
+  min-height:130px;
+}
+body.euonia .terminal{background:rgba(0,0,0,.06)}
+pre{
+  margin:0;
+  white-space:pre-wrap;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+  font-size:12px;
+  line-height:1.35;
+}
+
+.row{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+.btn{
+  border:1px solid var(--stroke);
+  background:rgba(255,255,255,.03);
+  color:var(--fg);
+  border-radius:12px;
+  padding:10px 12px;
+  letter-spacing:.06em;
+  cursor:pointer;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.55; cursor:not-allowed; transform:none}
+.btn.ghost{background:transparent}
+.btn.play{width:100%; text-align:left}
+
+.form{display:flex; flex-direction:column; gap:10px}
+label{display:flex; flex-direction:column; gap:6px; font-size:12px; letter-spacing:.08em}
+input{
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--stroke);
+  background:rgba(0,0,0,.25);
+  color:var(--fg);
+  outline:none;
+}
+body.euonia input{background:rgba(255,255,255,.65)}
+.checkline{flex-direction:row; align-items:center; gap:10px; letter-spacing:.06em}
+.error{min-height:18px; color:var(--danger); font-size:12px}
+
+.idwrap{margin-top:14px}
+canvas{
+  width:100%;
+  border-radius:14px;
+  border:1px solid var(--stroke);
+  background:rgba(0,0,0,.15);
+}
+
+.tracks{display:flex; flex-direction:column; gap:14px; margin-top:14px}
+.track{
+  border:1px solid var(--stroke);
+  border-radius:14px;
+  padding:14px;
+  background:rgba(255,255,255,.02);
+}
+.track-head{display:flex; justify-content:space-between; align-items:baseline; gap:10px}
+.track-title{font-weight:900; letter-spacing:.08em}
+
+.embed{
+  margin-top:12px;
+  display:none;
+  border-top:1px dashed var(--stroke);
+  padding-top:12px;
+}
+
+.footer{
+  display:flex; justify-content:space-between; gap:10px;
+  padding-top:14px; margin-top:14px;
+  border-top:1px solid var(--stroke);
+}
