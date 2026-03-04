@@ -2,8 +2,31 @@
 // Dark boot sequence + standing verification + ID card + music unlock
 // + 1-in-20 Bloomhouse whisper on boot
 // + occasional case fragments after verification
-const loreBar = document.getElementById("loreBar");
-const loreText = document.getElementById("loreText");
+let loreTimer = null;
+
+function showLoreBar(initialLine) {
+  const loreBar = document.getElementById("loreBar");
+  const loreText = document.getElementById("loreText");
+  if (!loreBar || !loreText) return;
+
+  loreBar.hidden = false;
+  loreText.textContent = initialLine || LORE_LINES[0];
+
+  if (loreTimer) clearInterval(loreTimer);
+  loreTimer = setInterval(() => {
+    const pick = LORE_LINES[Math.floor(Math.random() * LORE_LINES.length)];
+    loreText.textContent = pick;
+  }, 4000);
+}
+
+function hideLoreBar() {
+  const loreBar = document.getElementById("loreBar");
+  if (!loreBar) return;
+
+  loreBar.hidden = true;
+  if (loreTimer) clearInterval(loreTimer);
+  loreTimer = null;
+}
 const KEY = "an009_standing_v1";
 const THEME_KEY = "an009_theme";
 const COUNT_KEY = "an009_verified_count";
