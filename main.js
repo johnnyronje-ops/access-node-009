@@ -2,16 +2,13 @@
 // Dark boot sequence + standing verification + ID card + music unlock
 // + 1-in-20 Bloomhouse whisper on boot
 // + occasional case fragments after verification
-let loreTimer = null;
+// + lore bar ticker after confirmation (rotates hidden lore every 4s)
 
-function showLoreBar(initialLine) {
-}
-
-function hideLoreBar() {
-}
 const KEY = "an009_standing_v1";
 const THEME_KEY = "an009_theme";
 const COUNT_KEY = "an009_verified_count";
+
+// ---------- Lore Bar (post-verify ticker) ----------
 const LORE_LINES = [
   "NOTICE: Mercy rooms are compliance furniture.",
   "AUDIT: Ownership claims are void without consent.",
@@ -20,18 +17,19 @@ const LORE_LINES = [
   "ANGELA: Unauthorized witnesses logged.",
   "ASTRAEA: Jurisdiction denied when coercion is present.",
   "REG-U: You cannot redact what the rain has known.",
-  "FILE NOTE: The system does not break. It re-labels."
+  "FILE NOTE: The system does not break. It re-labels.",
 ];
 
 let loreTimer = null;
 
 function showLoreBar(initialLine) {
+  const loreBar = document.getElementById("loreBar");
+  const loreText = document.getElementById("loreText");
   if (!loreBar || !loreText) return;
 
   loreBar.hidden = false;
   loreText.textContent = initialLine || LORE_LINES[0];
 
-  // Rotate lines every 4 seconds
   if (loreTimer) clearInterval(loreTimer);
   loreTimer = setInterval(() => {
     const pick = LORE_LINES[Math.floor(Math.random() * LORE_LINES.length)];
@@ -40,11 +38,14 @@ function showLoreBar(initialLine) {
 }
 
 function hideLoreBar() {
+  const loreBar = document.getElementById("loreBar");
   if (!loreBar) return;
+
   loreBar.hidden = true;
   if (loreTimer) clearInterval(loreTimer);
   loreTimer = null;
 }
+
 // Elements (must exist in index.html)
 const statusPill = document.getElementById("statusPill");
 const terminalOut = document.getElementById("terminalOut");
@@ -78,6 +79,7 @@ const REQUIRED = [
   ["downloadBtn", downloadBtn],
   ["themeToggle", themeToggle],
   ["counter", counterEl],
+  // Lore bar elements are optional; we won't hard-fail if missing
 ];
 
 for (const [name, el] of REQUIRED) {
@@ -438,6 +440,7 @@ function bindThemeToggle() {
 
 // ---------- Event Wiring ----------
 function bindEvents() {
+  // Verify button: runs scan animation only (does not permanently verify)
   if (verifyBtn) {
     verifyBtn.addEventListener("click", async () => {
       const name = (subjectName?.value || "").trim() || "UNKNOWN";
@@ -445,17 +448,22 @@ function bindEvents() {
     });
   }
 
+  // Reset: clears local standing token
   if (resetBtn) {
     resetBtn.addEventListener("click", async () => {
       clearStanding();
+      hideLoreBar(); // hide lore ticker on reset
+
       if (formError) formError.textContent = "";
       setStatus(false);
       if (downloadBtn) downloadBtn.disabled = true;
+
       unlockButtons();
-      await runBootSequence();
+      await runBootSequence(); // bring back the dark boot after reset
     });
   }
 
+  // Form submit: performs standing verification + saves token
   if (form) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -483,9 +491,10 @@ function bindEvents() {
       drawId(standing);
       unlockButtons();
 
-        showLoreBar("STATUS: STANDING VERIFIED → INTERNAL FEED ENABLED");
+      // Lore ticker starts after confirmation
+      showLoreBar("STATUS: STANDING VERIFIED → INTERNAL FEED ENABLED");
 
-  appendTerminal(`RECORD: ISSUED ${nowLocalStamp()}`);
+      // Stamp-like post line
       appendTerminal(`RECORD: ISSUED ${nowLocalStamp()}`);
 
       // Occasional hidden fragment
@@ -494,6 +503,7 @@ function bindEvents() {
     });
   }
 
+  // Download ID
   if (downloadBtn) {
     downloadBtn.addEventListener("click", () => {
       const standing = getStanding();
@@ -555,8 +565,12 @@ function sleep(ms) {
       `REG-U / SCAN / RESUME\nSUBJECT: ${(standing.name || "UNKNOWN").toUpperCase()}\nSTATUS: STANDING VERIFIED\nSTAMP: FILE ACCEPTED`
     );
     drawId(standing);
+
+    // If already verified on load, show lore ticker too
+    showLoreBar("STATUS: STANDING VERIFIED → INTERNAL FEED ENABLED");
   } else {
-    await runBootSequence();
+    hideLoreBar(); // ensure hidden on fresh load
+    await runBootSequence(); // DARK BOOT ON LOAD
   }
 
   unlockButtons();
