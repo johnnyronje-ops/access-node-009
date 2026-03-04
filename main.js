@@ -110,7 +110,30 @@ function nowLocalStamp() {
   // Nicely readable local time stamp
   return new Date().toLocaleString();
 }
+function maybeBloomhouseWhisper(lines) {
 
+  // 1 in 20 chance
+  if (Math.random() < 0.05) {
+
+    const whispers = [
+      'BLOOMHOUSE / EG-013: "Beauty is not permission."',
+      'BLOOMHOUSE / NG-012: "Standing: Conditional. Anchor required."',
+      'BLOOMHOUSE / MG-011: "If the room feels kind, check the fine print."',
+      'BLOOMHOUSE / VG-010: "Protection is a verdict."'
+    ];
+
+    const pick = whispers[Math.floor(Math.random() * whispers.length)];
+
+    const out = [...lines];
+
+    // insert whisper near the end of the boot log
+    out.splice(lines.length - 3, 0, "", pick, "");
+
+    return out;
+  }
+
+  return lines;
+}
 // ---------- Boot Sequences ----------
 function darkerBootLines() {
 
@@ -118,7 +141,7 @@ function darkerBootLines() {
 
   // ANGELA VARIANT
   if (roll < 0.18) {
-    return [
+    return [maybeBloomhouseWhisper([
       "REG-U / NODE / ACCESS-NODE-009",
       "AUTHORITY: REGISTRY WARDEN CHANNEL",
       "",
