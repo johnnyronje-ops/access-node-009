@@ -110,6 +110,7 @@ function nowLocalStamp() {
   // Nicely readable local time stamp
   return new Date().toLocaleString();
 }
+
 function maybeBloomhouseWhisper(lines) {
 
   // 1 in 20 chance
@@ -160,7 +161,7 @@ function darkerBootLines() {
 
   // EUONIA VARIANT
   if (roll < 0.10) {
-    return [
+    return [maybeBloomhouseWhisper([
       "REG-U / NODE / ACCESS-NODE-009",
       "VENUE SHIFT REQUESTED",
       "AUTHORITY: EUONIA",
@@ -180,7 +181,7 @@ function darkerBootLines() {
 
   // ASTRAEA VARIANT
   if (roll < 0.06) {
-    return [
+    return [maybeBloomhouseWhisper([
       "REG-U / NODE / ACCESS-NODE-009",
       "WITNESS CHANNEL: ASTRAEA",
       "",
@@ -199,7 +200,7 @@ function darkerBootLines() {
   }
 
   // DEFAULT DARK BOOT
-  return [
+  return [maybeBloomhouseWhisper([
     "REG-U / NODE / ACCESS-NODE-009",
     "ERROR: MEMORY RING MISALIGNED",
     "VENUE SHIFT: DENIED",
