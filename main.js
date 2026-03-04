@@ -1,5 +1,7 @@
 // ACCESS-NODE-009 — main.js (full working)
 // Dark boot sequence + standing verification + ID card + music unlock
+// + 1-in-20 Bloomhouse whisper on boot
+// + occasional case fragments after verification
 
 const KEY = "an009_standing_v1";
 const THEME_KEY = "an009_theme";
@@ -23,7 +25,7 @@ const downloadBtn = document.getElementById("downloadBtn");
 const themeToggle = document.getElementById("themeToggle");
 const counterEl = document.getElementById("counter");
 
-// Basic safety: if any core element is missing, log and stop quietly
+// Basic safety: if any core element is missing, log (site may still partially work)
 const REQUIRED = [
   ["statusPill", statusPill],
   ["terminalOut", terminalOut],
@@ -81,7 +83,7 @@ function clearStanding() {
 
 function setCounter() {
   const count = Number(localStorage.getItem(COUNT_KEY) || "0");
-  counterEl.textContent = String(count);
+  if (counterEl) counterEl.textContent = String(count);
 }
 
 function bumpCounter() {
@@ -92,96 +94,80 @@ function bumpCounter() {
 
 // ---------- UI Helpers ----------
 function setStatus(verified) {
+  if (!statusPill) return;
   statusPill.textContent = verified ? "STANDING: VERIFIED" : "STANDING: UNVERIFIED";
   statusPill.style.borderColor = verified ? "var(--ok)" : "var(--stroke)";
 }
 
 function setTerminal(text) {
+  if (!terminalOut) return;
   terminalOut.textContent = text;
 }
 
 function appendTerminal(line) {
+  if (!terminalOut) return;
   terminalOut.textContent += (terminalOut.textContent.endsWith("\n") || terminalOut.textContent.length === 0)
     ? `${line}\n`
     : `\n${line}\n`;
 }
 
 function nowLocalStamp() {
-  // Nicely readable local time stamp
   return new Date().toLocaleString();
 }
 
+// ---------- Lore: 1-in-20 Bloomhouse whisper ----------
 function maybeBloomhouseWhisper(lines) {
-
-  // 1 in 20 chance
+  // 1 in 20 chance (~5%)
   if (Math.random() < 0.05) {
-
     const whispers = [
       'BLOOMHOUSE / EG-013: "Beauty is not permission."',
       'BLOOMHOUSE / NG-012: "Standing: Conditional. Anchor required."',
       'BLOOMHOUSE / MG-011: "If the room feels kind, check the fine print."',
-      'BLOOMHOUSE / VG-010: "Protection is a verdict."'
+      'BLOOMHOUSE / VG-010: "Protection is a verdict."',
     ];
-
     const pick = whispers[Math.floor(Math.random() * whispers.length)];
-
     const out = [...lines];
 
-    // insert whisper near the end of the boot log
-    out.splice(lines.length - 3, 0, "", pick, "");
-
+    // Insert near end (before STATUS / PROMPT area)
+    const insertAt = Math.max(0, out.length - 3);
+    out.splice(insertAt, 0, "", pick, "");
     return out;
   }
-
   return lines;
 }
+
+// ---------- Lore: post-verify case fragments ----------
+function maybeCaseFragment(context = {}) {
+  // ~30% chance after successful verification
+  if (Math.random() > 0.30) return null;
+
+  const fragments = [
+    "CASE FRAGMENT / REDACTION LAYER: [████] Mercy presented as compliance reward.",
+    "CASE FRAGMENT / SILENCE REGISTRY: Listening state unknown.",
+    "CASE FRAGMENT / EUONIA: Standing Cascade available (LOCKED).",
+    "CASE FRAGMENT / ANGELA: Healer role deprecated. Warden protocols active.",
+    "CASE FRAGMENT / ASTRAEA: Ownership denied. Jurisdiction without walls.",
+    "CASE FRAGMENT / BLOOMHOUSE: Pollen of Agreement detected (TRACE).",
+    "CASE FRAGMENT / VENUE NOTE: Warm light ≠ safe room.",
+    "CASE FRAGMENT / AUDIT: A claim was asserted. The system blinked first.",
+  ];
+
+  const name = (context.name || "").trim();
+  const personalized = name
+    ? `CASE FRAGMENT / SUBJECT:${name.toUpperCase()} — Do not let them name you.`
+    : null;
+
+  const pool = personalized ? [...fragments, personalized] : fragments;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 // ---------- Boot Sequences ----------
 function darkerBootLines() {
-
   const roll = Math.random();
 
-  // ANGELA VARIANT
-  if (roll < 0.18) {
-    return [maybeBloomhouseWhisper([
-      "REG-U / NODE / ACCESS-NODE-009",
-      "AUTHORITY: REGISTRY WARDEN CHANNEL",
-      "",
-      "MEMO / ANGELA:",
-      "\"You introduced unauthorized witnesses into a sealed venue.\"",
-      "",
-      "CORRECTION:",
-      "Mercy rooms are not sanctuaries.",
-      "They are compliance furniture.",
-      "",
-      "STATUS:",
-      "WARDEN ATTENTION REQUIRED",
-      "SUBJECT INTAKE CONTINUES"
-    ];
-  }
-
-  // EUONIA VARIANT
-  if (roll < 0.10) {
-    return [maybeBloomhouseWhisper([
-      "REG-U / NODE / ACCESS-NODE-009",
-      "VENUE SHIFT REQUESTED",
-      "AUTHORITY: EUONIA",
-      "",
-      "NOTICE:",
-      "Consent is load-bearing.",
-      "Ownership claims inherit the burden of proof.",
-      "",
-      "STANDING CASCADE:",
-      "Tri-Seal required.",
-      "",
-      "JURISDICTION WITHOUT WALLS",
-      "",
-      "STATUS: AWAITING SUBJECT"
-    ];
-  }
-
-  // ASTRAEA VARIANT
+  // ASTRAEA (rarest)
   if (roll < 0.06) {
-    return [maybeBloomhouseWhisper([
+    return maybeBloomhouseWhisper([
       "REG-U / NODE / ACCESS-NODE-009",
       "WITNESS CHANNEL: ASTRAEA",
       "",
@@ -195,12 +181,51 @@ function darkerBootLines() {
       "NOTICE:",
       "Consent is sacred.",
       "",
-      "STATUS: AWAITING SUBJECT"
-    ];
+      "STATUS: AWAITING SUBJECT",
+    ]);
+  }
+
+  // EUONIA (very rare)
+  if (roll < 0.10) {
+    return maybeBloomhouseWhisper([
+      "REG-U / NODE / ACCESS-NODE-009",
+      "VENUE SHIFT REQUESTED",
+      "AUTHORITY: EUONIA",
+      "",
+      "NOTICE:",
+      "Consent is load-bearing.",
+      "Ownership claims inherit the burden of proof.",
+      "",
+      "STANDING CASCADE:",
+      "Tri-Seal required.",
+      "",
+      "JURISDICTION WITHOUT WALLS",
+      "",
+      "STATUS: AWAITING SUBJECT",
+    ]);
+  }
+
+  // ANGELA (rare)
+  if (roll < 0.18) {
+    return maybeBloomhouseWhisper([
+      "REG-U / NODE / ACCESS-NODE-009",
+      "AUTHORITY: REGISTRY WARDEN CHANNEL",
+      "",
+      "MEMO / ANGELA:",
+      "\"You introduced unauthorized witnesses into a sealed venue.\"",
+      "",
+      "CORRECTION:",
+      "Mercy rooms are not sanctuaries.",
+      "They are compliance furniture.",
+      "",
+      "STATUS:",
+      "WARDEN ATTENTION REQUIRED",
+      "SUBJECT INTAKE CONTINUES",
+    ]);
   }
 
   // DEFAULT DARK BOOT
-  return [maybeBloomhouseWhisper([
+  return maybeBloomhouseWhisper([
     "REG-U / NODE / ACCESS-NODE-009",
     "ERROR: MEMORY RING MISALIGNED",
     "VENUE SHIFT: DENIED",
@@ -216,9 +241,10 @@ function darkerBootLines() {
     "YOU ARE READING THE WRONG LINES.",
     "",
     "STATUS: AWAITING SUBJECT",
-    "PROMPT: ENTER NAME → GRANT CONSENT → SUBMIT"
-  ];
+    "PROMPT: ENTER NAME → GRANT CONSENT → SUBMIT",
+  ]);
 }
+
 async function runBootSequence() {
   setTerminal("");
   const lines = darkerBootLines();
@@ -243,7 +269,7 @@ function scanLines(name) {
 }
 
 async function runScan(name) {
-  setTerminal(""); // keep scan clean
+  setTerminal("");
   for (const line of scanLines(name)) {
     appendTerminal(line);
     await sleep(140);
@@ -263,6 +289,7 @@ function isUnlocked(unlockISO) {
 
 // ---------- ID Card ----------
 function drawId(standing) {
+  if (!canvas) return;
   const ctx = canvas.getContext("2d");
 
   const css = getComputedStyle(document.body);
@@ -323,10 +350,11 @@ function drawId(standing) {
   ctx.fillStyle = muted;
   ctx.fillText(`ISSUED: ${new Date(standing.issuedAt).toLocaleString()}`, 60, 455);
 
-  downloadBtn.disabled = false;
+  if (downloadBtn) downloadBtn.disabled = false;
 }
 
 function downloadId(name) {
+  if (!canvas) return;
   const a = document.createElement("a");
   a.download = `standing-id-${(name || "subject").replace(/\s+/g, "-")}.png`;
   a.href = canvas.toDataURL("image/png");
@@ -360,6 +388,7 @@ function initTheme() {
 }
 
 function bindThemeToggle() {
+  if (!themeToggle) return;
   themeToggle.addEventListener("click", (e) => {
     e.preventDefault();
     document.body.classList.toggle("euonia");
@@ -371,59 +400,66 @@ function bindThemeToggle() {
 
 // ---------- Event Wiring ----------
 function bindEvents() {
-  // Verify button: runs scan animation only (does not permanently verify)
-  verifyBtn.addEventListener("click", async () => {
-    const name = subjectName.value.trim() || "UNKNOWN";
-    await runScan(name);
-  });
+  if (verifyBtn) {
+    verifyBtn.addEventListener("click", async () => {
+      const name = (subjectName?.value || "").trim() || "UNKNOWN";
+      await runScan(name);
+    });
+  }
 
-  // Reset: clears local standing token
-  resetBtn.addEventListener("click", async () => {
-    clearStanding();
-    formError.textContent = "";
-    setStatus(false);
-    downloadBtn.disabled = true;
-    unlockButtons();
-    await runBootSequence(); // bring back the dark boot after reset
-  });
+  if (resetBtn) {
+    resetBtn.addEventListener("click", async () => {
+      clearStanding();
+      if (formError) formError.textContent = "";
+      setStatus(false);
+      if (downloadBtn) downloadBtn.disabled = true;
+      unlockButtons();
+      await runBootSequence();
+    });
+  }
 
-  // Form submit: performs standing verification + saves token
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    formError.textContent = "";
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (formError) formError.textContent = "";
 
-    const name = subjectName.value.trim();
-    const tag = caseTag.value.trim();
-    const consent = consentCheck.checked;
+      const name = (subjectName?.value || "").trim();
+      const tag = (caseTag?.value || "").trim();
+      const consent = !!consentCheck?.checked;
 
-    if (!name) {
-      formError.textContent = "ERROR: SUBJECT NAME REQUIRED.";
-      return;
-    }
-    if (!consent) {
-      formError.textContent = "ERROR: CONSENT REQUIRED.";
-      return;
-    }
+      if (!name) {
+        if (formError) formError.textContent = "ERROR: SUBJECT NAME REQUIRED.";
+        return;
+      }
+      if (!consent) {
+        if (formError) formError.textContent = "ERROR: CONSENT REQUIRED.";
+        return;
+      }
 
-    await runScan(name);
+      await runScan(name);
 
-    const standing = setStanding({ name, caseTag: tag });
-    bumpCounter();
+      const standing = setStanding({ name, caseTag: tag });
+      bumpCounter();
 
-    setStatus(true);
-    drawId(standing);
-    unlockButtons();
+      setStatus(true);
+      drawId(standing);
+      unlockButtons();
 
-    // Optional: stamp-like post line
-    appendTerminal(`RECORD: ISSUED ${nowLocalStamp()}`);
-  });
+      appendTerminal(`RECORD: ISSUED ${nowLocalStamp()}`);
 
-  // Download ID
-  downloadBtn.addEventListener("click", () => {
-    const standing = getStanding();
-    if (!standing?.verified) return;
-    downloadId(standing.name);
-  });
+      // Occasional hidden fragment
+      const frag = maybeCaseFragment({ name, caseTag: tag });
+      if (frag) appendTerminal(frag);
+    });
+  }
+
+  if (downloadBtn) {
+    downloadBtn.addEventListener("click", () => {
+      const standing = getStanding();
+      if (!standing?.verified) return;
+      downloadId(standing.name);
+    });
+  }
 
   // Music play buttons (event delegation)
   document.addEventListener("click", (e) => {
@@ -479,7 +515,7 @@ function sleep(ms) {
     );
     drawId(standing);
   } else {
-    await runBootSequence(); // DARK BOOT ON LOAD
+    await runBootSequence();
   }
 
   unlockButtons();
