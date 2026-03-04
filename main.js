@@ -5,27 +5,9 @@
 let loreTimer = null;
 
 function showLoreBar(initialLine) {
-  const loreBar = document.getElementById("loreBar");
-  const loreText = document.getElementById("loreText");
-  if (!loreBar || !loreText) return;
-
-  loreBar.hidden = false;
-  loreText.textContent = initialLine || LORE_LINES[0];
-
-  if (loreTimer) clearInterval(loreTimer);
-  loreTimer = setInterval(() => {
-    const pick = LORE_LINES[Math.floor(Math.random() * LORE_LINES.length)];
-    loreText.textContent = pick;
-  }, 4000);
 }
 
 function hideLoreBar() {
-  const loreBar = document.getElementById("loreBar");
-  if (!loreBar) return;
-
-  loreBar.hidden = true;
-  if (loreTimer) clearInterval(loreTimer);
-  loreTimer = null;
 }
 const KEY = "an009_standing_v1";
 const THEME_KEY = "an009_theme";
@@ -501,6 +483,9 @@ function bindEvents() {
       drawId(standing);
       unlockButtons();
 
+        showLoreBar("STATUS: STANDING VERIFIED → INTERNAL FEED ENABLED");
+
+  appendTerminal(`RECORD: ISSUED ${nowLocalStamp()}`);
       appendTerminal(`RECORD: ISSUED ${nowLocalStamp()}`);
 
       // Occasional hidden fragment
