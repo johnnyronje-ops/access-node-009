@@ -2,11 +2,44 @@
 // Dark boot sequence + standing verification + ID card + music unlock
 // + 1-in-20 Bloomhouse whisper on boot
 // + occasional case fragments after verification
-
+const loreBar = document.getElementById("loreBar");
+const loreText = document.getElementById("loreText");
 const KEY = "an009_standing_v1";
 const THEME_KEY = "an009_theme";
 const COUNT_KEY = "an009_verified_count";
+const LORE_LINES = [
+  "NOTICE: Mercy rooms are compliance furniture.",
+  "AUDIT: Ownership claims are void without consent.",
+  "EUONIA: Standing Cascade available (LOCKED).",
+  "BLOOMHOUSE: Pollen of Agreement detected (TRACE).",
+  "ANGELA: Unauthorized witnesses logged.",
+  "ASTRAEA: Jurisdiction denied when coercion is present.",
+  "REG-U: You cannot redact what the rain has known.",
+  "FILE NOTE: The system does not break. It re-labels."
+];
 
+let loreTimer = null;
+
+function showLoreBar(initialLine) {
+  if (!loreBar || !loreText) return;
+
+  loreBar.hidden = false;
+  loreText.textContent = initialLine || LORE_LINES[0];
+
+  // Rotate lines every 4 seconds
+  if (loreTimer) clearInterval(loreTimer);
+  loreTimer = setInterval(() => {
+    const pick = LORE_LINES[Math.floor(Math.random() * LORE_LINES.length)];
+    loreText.textContent = pick;
+  }, 4000);
+}
+
+function hideLoreBar() {
+  if (!loreBar) return;
+  loreBar.hidden = true;
+  if (loreTimer) clearInterval(loreTimer);
+  loreTimer = null;
+}
 // Elements (must exist in index.html)
 const statusPill = document.getElementById("statusPill");
 const terminalOut = document.getElementById("terminalOut");
