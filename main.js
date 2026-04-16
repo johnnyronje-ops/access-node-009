@@ -1,14 +1,16 @@
-// ACCESS-NODE-009 — main.js (full working)
+// ACCESS-NODE-009 — main.js (living artifact build)
 // Dark boot sequence + standing verification + ID card + music unlock
 // + 1-in-20 Bloomhouse whisper on boot
 // + occasional case fragments after verification
-// + lore bar ticker after confirmation (rotates hidden lore every 4s)
+// + lore bar ticker after confirmation
+// + seams/geometry/stamps FX layer
+// + milestone jurisdiction events (10/15)
 
 const KEY = "an009_standing_v1";
 const THEME_KEY = "an009_theme";
 const COUNT_KEY = "an009_verified_count";
 
-// ---------- Lore Bar (post-verify ticker) ----------
+// ---------- Lore Bar ----------
 const LORE_LINES = [
   "NOTICE: Mercy rooms are compliance furniture.",
   "AUDIT: Ownership claims are void without consent.",
@@ -32,8 +34,7 @@ function showLoreBar(initialLine) {
 
   if (loreTimer) clearInterval(loreTimer);
   loreTimer = setInterval(() => {
-    const pick = LORE_LINES[Math.floor(Math.random() * LORE_LINES.length)];
-    loreText.textContent = pick;
+    loreText.textContent = LORE_LINES[Math.floor(Math.random() * LORE_LINES.length)];
   }, 4000);
 }
 
@@ -46,7 +47,41 @@ function hideLoreBar() {
   loreTimer = null;
 }
 
-// Elements (must exist in index.html)
+// ---------- FX Layer (seams / geometry / stamps) ----------
+function fxSeam() {
+  const layer = document.getElementById("fxLayer");
+  if (!layer) return;
+  const el = document.createElement("div");
+  el.className = "fx-seam";
+  layer.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+}
+
+function fxGeometry() {
+  const layer = document.getElementById("fxLayer");
+  if (!layer) return;
+  const el = document.createElement("div");
+  el.className = "fx-geo";
+  layer.appendChild(el);
+  setTimeout(() => el.remove(), 950);
+}
+
+function fxStamp(textTop, textBig, textSub) {
+  const layer = document.getElementById("fxLayer");
+  if (!layer) return;
+
+  const el = document.createElement("div");
+  el.className = "fx-stamp";
+  el.innerHTML = `
+    <div class="kicker">${(textTop || "REG-U / NOTICE").toUpperCase()}</div>
+    <div class="big">${(textBig || "STANDING").toUpperCase()}</div>
+    <div class="sub">${(textSub || "VERIFIED").toUpperCase()}</div>
+  `;
+  layer.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+
+// ---------- Elements ----------
 const statusPill = document.getElementById("statusPill");
 const terminalOut = document.getElementById("terminalOut");
 const verifyBtn = document.getElementById("verifyBtn");
@@ -64,31 +99,7 @@ const downloadBtn = document.getElementById("downloadBtn");
 const themeToggle = document.getElementById("themeToggle");
 const counterEl = document.getElementById("counter");
 
-// Basic safety: if any core element is missing, log (site may still partially work)
-const REQUIRED = [
-  ["statusPill", statusPill],
-  ["terminalOut", terminalOut],
-  ["verifyBtn", verifyBtn],
-  ["resetBtn", resetBtn],
-  ["verifyForm", form],
-  ["subjectName", subjectName],
-  ["caseTag", caseTag],
-  ["consentCheck", consentCheck],
-  ["formError", formError],
-  ["idCanvas", canvas],
-  ["downloadBtn", downloadBtn],
-  ["themeToggle", themeToggle],
-  ["counter", counterEl],
-  // Lore bar elements are optional; we won't hard-fail if missing
-];
-
-for (const [name, el] of REQUIRED) {
-  if (!el) {
-    console.warn(`ACCESS-NODE-009: Missing element #${name}. Check your index.html ids.`);
-  }
-}
-
-// Replace these placeholders later with real Spotify/Bandcamp embeds or link-outs
+// ---------- Embeds placeholders ----------
 const TRACK_EMBEDS = {
   intake: { html: `<div class="tiny muted">Embed placeholder. Replace with Spotify/Bandcamp embed.</div>` },
   containment: { html: `<div class="tiny muted">Embed placeholder.</div>` },
@@ -130,6 +141,7 @@ function bumpCounter() {
   const count = Number(localStorage.getItem(COUNT_KEY) || "0") + 1;
   localStorage.setItem(COUNT_KEY, String(count));
   setCounter();
+  return count;
 }
 
 // ---------- UI Helpers ----------
@@ -155,9 +167,8 @@ function nowLocalStamp() {
   return new Date().toLocaleString();
 }
 
-// ---------- Lore: 1-in-20 Bloomhouse whisper ----------
+// ---------- Bloomhouse whisper (1 in 20 on boot) ----------
 function maybeBloomhouseWhisper(lines) {
-  // 1 in 20 chance (~5%)
   if (Math.random() < 0.05) {
     const whispers = [
       'BLOOMHOUSE / EG-013: "Beauty is not permission."',
@@ -167,8 +178,6 @@ function maybeBloomhouseWhisper(lines) {
     ];
     const pick = whispers[Math.floor(Math.random() * whispers.length)];
     const out = [...lines];
-
-    // Insert near end (before STATUS / PROMPT area)
     const insertAt = Math.max(0, out.length - 3);
     out.splice(insertAt, 0, "", pick, "");
     return out;
@@ -176,9 +185,8 @@ function maybeBloomhouseWhisper(lines) {
   return lines;
 }
 
-// ---------- Lore: post-verify case fragments ----------
+// ---------- Case fragments (post-verify) ----------
 function maybeCaseFragment(context = {}) {
-  // ~30% chance after successful verification
   if (Math.random() > 0.30) return null;
 
   const fragments = [
@@ -438,9 +446,96 @@ function bindThemeToggle() {
   });
 }
 
+// ---------- Jurisdiction Events (milestones) ----------
+function maybeJurisdictionEvent(triggerCount) {
+  const count = Number(triggerCount || localStorage.getItem(COUNT_KEY) || "0");
+
+  // every 10 or 15 (your “the page is crumbling” rhythm)
+  const HIT = (count % 10 === 0) || (count % 15 === 0);
+  if (!HIT || count === 0) return;
+
+  const el = document.getElementById("jurisdictionEvent");
+  const title = document.getElementById("jurisdictionTitle");
+  const body = document.getElementById("jurisdictionBody");
+  const stamp = document.getElementById("jurisdictionStamp");
+  if (!el || !title || !body || !stamp) return;
+
+  const events = [
+    {
+      who: "AURORA VALE",
+      t: "SEAM INTERVENTION",
+      b: "Thread authority applied. Reality is splitting at the edges. Do not accept unnamed contracts.",
+      s: "SEAM STITCHED",
+      fx: () => { fxSeam(); fxStamp("THREAD AUTHORITY", "SEAM", "STITCHED"); }
+    },
+    {
+      who: "ELOWEN",
+      t: "GROUND TRUTH LOCK",
+      b: "Containment geometry deployed. The lie loses traction. The floor stops shifting.",
+      s: "GEOMETRY SET",
+      fx: () => { fxGeometry(); fxStamp("GROUND TRUTH", "LOCK", "SET"); }
+    },
+    {
+      who: "KATELYN",
+      t: "COUNSEL OF TRUTH",
+      b: "Ownership claims challenged. Standing requires clean consent. Burden of proof rejected.",
+      s: "CLAIM VOID",
+      fx: () => { fxStamp("COUNSEL", "CLAIM", "VOID"); }
+    },
+    {
+      who: "SERAPHINE",
+      t: "THORN SHIELD",
+      b: "Protective lattice engaged. Mercy with boundaries. No entry without permission.",
+      s: "CONSENT VERIFIED",
+      fx: () => { fxStamp("SANCTUM", "CONSENT", "VERIFIED"); }
+    },
+    {
+      who: "SAYA",
+      t: "LIMINAL WARNING",
+      b: "You are near the threshold. If the room feels kind, check the fine print.",
+      s: "OWNERSHIP DENIED",
+      fx: () => { fxSeam(); fxStamp("LIMINAL", "OWNERSHIP", "DENIED"); }
+    },
+    {
+      who: "ASTRAEA",
+      t: "VERDICT DROP",
+      b: "Appeal denied. Coercion collapses standing. The system remembers what it tried to do.",
+      s: "FINAL",
+      fx: () => { fxStamp("COURT", "APPEAL", "DENIED"); }
+    },
+    {
+      who: "CLAUDIA",
+      t: "FIELD PATCH",
+      b: "Emergency consent bandage applied. Ugly. Temporary. Functional. Keeps the floor from falling out.",
+      s: "PATCHED",
+      fx: () => { fxGeometry(); fxStamp("LOOMWRIGHT", "PATCH", "APPLIED"); }
+    },
+  ];
+
+  const pick = events[Math.floor(Math.random() * events.length)];
+
+  title.textContent = `${pick.who} / ${pick.t}`;
+  body.textContent = pick.b;
+  stamp.textContent = pick.s;
+
+  el.hidden = false;
+
+  // log it
+  appendTerminal("");
+  appendTerminal(`JURISDICTION EVENT / ${pick.who}`);
+  appendTerminal(`ACTION: ${pick.t}`);
+  appendTerminal(`STAMP: ${pick.s}`);
+  appendTerminal("");
+
+  // play the visuals
+  try { pick.fx?.(); } catch {}
+
+  setTimeout(() => { el.hidden = true; }, 4200);
+}
+
 // ---------- Event Wiring ----------
 function bindEvents() {
-  // Verify button: runs scan animation only (does not permanently verify)
+  // Verify button: scan animation only (does not set standing)
   if (verifyBtn) {
     verifyBtn.addEventListener("click", async () => {
       const name = (subjectName?.value || "").trim() || "UNKNOWN";
@@ -452,14 +547,14 @@ function bindEvents() {
   if (resetBtn) {
     resetBtn.addEventListener("click", async () => {
       clearStanding();
-      hideLoreBar(); // hide lore ticker on reset
+      hideLoreBar();
 
       if (formError) formError.textContent = "";
       setStatus(false);
       if (downloadBtn) downloadBtn.disabled = true;
 
       unlockButtons();
-      await runBootSequence(); // bring back the dark boot after reset
+      await runBootSequence();
     });
   }
 
@@ -485,21 +580,26 @@ function bindEvents() {
       await runScan(name);
 
       const standing = setStanding({ name, caseTag: tag });
-      bumpCounter();
+      const newCount = bumpCounter();
 
       setStatus(true);
       drawId(standing);
       unlockButtons();
 
-      // Lore ticker starts after confirmation
-      showLoreBar("STATUS: STANDING VERIFIED → INTERNAL FEED ENABLED");
+      // “monster wakes up” visuals
+      fxSeam();
+      fxGeometry();
+      fxStamp("REG-U / FILE", "STANDING", "VERIFIED");
 
-      // Stamp-like post line
+      showLoreBar("STATUS: STANDING VERIFIED → INTERNAL FEED ENABLED");
       appendTerminal(`RECORD: ISSUED ${nowLocalStamp()}`);
 
-      // Occasional hidden fragment
+      // occasional hidden fragment
       const frag = maybeCaseFragment({ name, caseTag: tag });
       if (frag) appendTerminal(frag);
+
+      // milestone jurisdiction event
+      maybeJurisdictionEvent(newCount);
     });
   }
 
@@ -540,6 +640,9 @@ function bindEvents() {
     }
 
     setTerminal(`ACCESS GRANTED → ${(track || "TRACK").toUpperCase()}\nFILE ACCEPTED.`);
+
+    // subtle “audio log opened” stamp
+    fxStamp("AUDIO", "LOG", "OPENED");
   });
 }
 
@@ -565,13 +668,14 @@ function sleep(ms) {
       `REG-U / SCAN / RESUME\nSUBJECT: ${(standing.name || "UNKNOWN").toUpperCase()}\nSTATUS: STANDING VERIFIED\nSTAMP: FILE ACCEPTED`
     );
     drawId(standing);
+    unlockButtons();
+    showLoreBar("RESUME: VERIFIED SESSION → INTERNAL FEED ACTIVE");
 
-    // If already verified on load, show lore ticker too
-    showLoreBar("STATUS: STANDING VERIFIED → INTERNAL FEED ENABLED");
+    // tiny “resume wake”
+    fxStamp("REG-U", "SESSION", "RESUMED");
   } else {
-    hideLoreBar(); // ensure hidden on fresh load
-    await runBootSequence(); // DARK BOOT ON LOAD
+    hideLoreBar();
+    await runBootSequence();
+    unlockButtons();
   }
-
-  unlockButtons();
 })();
