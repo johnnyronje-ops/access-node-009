@@ -10,42 +10,6 @@ const KEY = "an009_standing_v1";
 const THEME_KEY = "an009_theme";
 const COUNT_KEY = "an009_verified_count";
 
-// ---------- Lore Bar ----------
-const LORE_LINES = [
-  "NOTICE: Mercy rooms are compliance furniture.",
-  "AUDIT: Ownership claims are void without consent.",
-  "EUONIA: Standing Cascade available (LOCKED).",
-  "BLOOMHOUSE: Pollen of Agreement detected (TRACE).",
-  "ANGELA: Unauthorized witnesses logged.",
-  "ASTRAEA: Jurisdiction denied when coercion is present.",
-  "REG-U: You cannot redact what the rain has known.",
-  "FILE NOTE: The system does not break. It re-labels.",
-];
-
-let loreTimer = null;
-
-function showLoreBar(initialLine) {
-  const loreBar = document.getElementById("loreBar");
-  const loreText = document.getElementById("loreText");
-  if (!loreBar || !loreText) return;
-
-  loreBar.hidden = false;
-  loreText.textContent = initialLine || LORE_LINES[0];
-
-  if (loreTimer) clearInterval(loreTimer);
-  loreTimer = setInterval(() => {
-    loreText.textContent = LORE_LINES[Math.floor(Math.random() * LORE_LINES.length)];
-  }, 4000);
-}
-
-function hideLoreBar() {
-  const loreBar = document.getElementById("loreBar");
-  if (!loreBar) return;
-
-  loreBar.hidden = true;
-  if (loreTimer) clearInterval(loreTimer);
-  loreTimer = null;
-}
 
 // ---------- FX Layer (seams / geometry / stamps) ----------
 function fxSeam() {
@@ -142,6 +106,42 @@ function bumpCounter() {
   localStorage.setItem(COUNT_KEY, String(count));
   setCounter();
   return count;
+}
+// ---------- Lore Bar ----------
+const LORE_LINES = [
+  "NOTICE: Mercy rooms are compliance furniture.",
+  "AUDIT: Ownership claims are void without consent.",
+  "EUONIA: Standing Cascade available (LOCKED).",
+  "BLOOMHOUSE: Pollen of Agreement detected (TRACE).",
+  "ANGELA: Unauthorized witnesses logged.",
+  "ASTRAEA: Jurisdiction denied when coercion is present.",
+  "REG-U: You cannot redact what the rain has known.",
+  "FILE NOTE: The system does not break. It re-labels.",
+];
+
+let loreTimer = null;
+
+function showLoreBar(initialLine) {
+  const loreBar = document.getElementById("loreBar");
+  const loreText = document.getElementById("loreText");
+  if (!loreBar || !loreText) return;
+
+  loreBar.hidden = false;
+  loreText.textContent = initialLine || LORE_LINES[0];
+
+  if (loreTimer) clearInterval(loreTimer);
+  loreTimer = setInterval(() => {
+    loreText.textContent = LORE_LINES[Math.floor(Math.random() * LORE_LINES.length)];
+  }, 4000);
+}
+
+function hideLoreBar() {
+  const loreBar = document.getElementById("loreBar");
+  if (!loreBar) return;
+
+  loreBar.hidden = true;
+  if (loreTimer) clearInterval(loreTimer);
+  loreTimer = null;
 }
 
 // ---------- UI Helpers ----------
