@@ -28,9 +28,70 @@ const counterEl = document.getElementById("counter");
 
 // ---------- Music placeholders ----------
 const TRACK_EMBEDS = {
-  intake: { html: `<div class="tiny muted">Embed placeholder. Replace with Spotify/Bandcamp embed.</div>` },
-  containment: { html: `<div class="tiny muted">Embed placeholder.</div>` },
-  signature: { html: `<div class="tiny muted">Embed placeholder.</div>` },
+  intake: {
+    html: `
+      <div class="tiny muted">
+        EVIDENCE FILE 001<br>
+        CLASSIFICATION: PUBLIC RECORD
+      </div>
+
+      <div class="row">
+        <a class="btn ghost archive-link" href="https://open.spotify.com/album/6CQaRExhsAzmot5Yan0pW1?si=jGtVe14BTiCzt4ONnyf7wA" target="_blank" data-class="PUBLIC STREAM">
+          PUBLIC STREAM
+        </a>
+
+        <a class="btn ghost archive-link" href="https://youtube.com/playlist?list=OLAK5uy_mBSPJukIxq-czcqlPOPQd4lWs3w1l-cL0&si=yG5Gm0fv3JMYWV0g" target="_blank" data-class="SURVEILLANCE COPY">
+          SURVEILLANCE COPY
+        </a>
+      </div>
+
+      <div class="tiny muted" style="margin-top:12px">
+        RECOVERY STATUS: COMPLETE
+      </div>
+    `
+  },
+
+  containment: {
+    html: `
+      <div class="tiny muted">
+        EVIDENCE FILE 002<br>
+        CLASSIFICATION: PARTIAL DISCLOSURE
+      </div>
+
+      <div class="row">
+        <a class="btn ghost archive-link" href="https://open.spotify.com/album/2VrDvnjeDuRrWjQgGFf7Ws?si=vcStbuOfRP66WfHv67m6EA" target="_blank" data-class="PUBLIC STREAM">
+          PUBLIC STREAM
+        </a>
+
+        <a class="btn ghost archive-link" href="https://youtube.com/playlist?list=OLAK5uy_lVe6W7_m3ssCz2A48vg7UrjsmPi44RrmI&si=fH8T2EZrwwKDNrAw" target="_blank" data-class="SURVEILLANCE COPY">
+          SURVEILLANCE COPY
+        </a>
+      </div>
+
+      <div class="tiny muted" style="margin-top:12px">
+        RECOVERY STATUS: DEGRADED
+      </div>
+    `
+  },
+
+  signature: {
+    html: `
+      <div class="tiny muted">
+        EVIDENCE FILE 003<br>
+        CLASSIFICATION: SANCTIONED LEAK
+      </div>
+
+      <div class="row">
+        <a class="btn ghost archive-link" href="https://open.spotify.com/album/3WrA3DnAOOecHZS200YWzx?si=objXR6xnSOyi0dbdLhyObw" target="_blank" data-class="PUBLIC STREAM">
+          PUBLIC STREAM
+        </a>
+      </div>
+
+      <div class="tiny muted" style="margin-top:12px">
+        RECOVERY STATUS: RESTRICTED
+      </div>
+    `
+  }
 };
 
 // ---------- Storage ----------
@@ -628,6 +689,39 @@ function bindEvents() {
     setTerminal(`ACCESS GRANTED → ${(track || "TRACK").toUpperCase()}\nFILE ACCEPTED.`);
     fxStamp("AUDIO", "LOG", "OPENED");
   });
+// Archive links
+document.addEventListener("click", (e) => {
+  const link = e.target.closest(".archive-link");
+  if (!link) return;
+
+  e.preventDefault();
+
+  const url = link.href;
+  const mediaClass = link.dataset.class || "EXTERNAL ARCHIVE";
+
+  setTerminal(
+`REQUEST RECEIVED...
+
+MEDIA CLASSIFICATION:
+${mediaClass}
+
+AUTHORITY:
+REG-U
+
+COPY STATUS:
+AUTHORIZED
+
+VERIFYING JURISDICTION...
+
+OPENING ARCHIVE...`
+  );
+
+  fxStamp("MEDIA", "ACCESS", "AUTHORIZED");
+
+  setTimeout(() => {
+    window.open(url, "_blank");
+  }, 900);
+});
 }
 
 // ---------- Init ----------
