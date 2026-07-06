@@ -638,7 +638,7 @@ function sleep(ms) {
     // tiny “resume wake”
     fxStamp("REG-U", "SESSION", "RESUMED");
   } else {
-    hideLoreBar();
+    ();
     await runBootSequence();
     unlockButtons();
   }
