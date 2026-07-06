@@ -206,10 +206,7 @@ body::after{
 
 
 
-.lorebar__text{
-  font: 600 13px ui-monospace, Menlo, Monaco, Consolas, "Courier New", monospace;
-  letter-spacing: .06em;
-  opacity: .9;
+
 }
 
 /* =========================
@@ -480,4 +477,18 @@ body::after{
   font-weight: 800;
   letter-spacing: .08em;
   text-transform: uppercase;
+}
+
+
+/* EMERGENCY FIX: respect hidden overlays */
+[hidden]{
+  display:none !important;
+}
+
+.jurisdiction[hidden]{
+  display:none !important;
+}
+
+#jurisdictionEvent[hidden]{
+  display:none !important;
 }
