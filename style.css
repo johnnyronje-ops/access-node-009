@@ -204,27 +204,7 @@ body::after{
   opacity:.18;
 }
 
-/* =========================
-   LORE BAR (ticker)
-   ========================= */
-.lorebar{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  border: 1px solid rgba(232,225,207,.18);
-  background: rgba(0,0,0,.25);
-  padding: 10px 12px;
-  border-radius: 12px;
-  margin: 14px 0 8px;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset;
-}
 
-.lorebar__label{
-  font: 700 12px ui-monospace, Menlo, Monaco, Consolas, "Courier New", monospace;
-  letter-spacing: .14em;
-  opacity: .75;
-  white-space: nowrap;
-}
 
 .lorebar__text{
   font: 600 13px ui-monospace, Menlo, Monaco, Consolas, "Courier New", monospace;
