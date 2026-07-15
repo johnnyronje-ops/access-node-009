@@ -752,10 +752,3 @@ OPENING ARCHIVE...`
 
 
 
-<a
-  class="chip living-text"
-  href="./dossiers/elizabeth-kuroda/"
-  data-hover="CASE PS-014"
->
-  DOSSIERS
-</a>
