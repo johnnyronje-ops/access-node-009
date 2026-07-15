@@ -752,3 +752,46 @@ OPENING ARCHIVE...`
 
 
 
+<a href="dossiers/elizabeth-kuroda/index.html"
+   class="dossier-folder elizabeth-kuroda-file">
+
+  <div class="dossier-folder-tab">
+    ACTIVE CASE
+  </div>
+
+  <div class="dossier-folder-body">
+    <div class="dossier-file-number">
+      PS-014
+    </div>
+
+    <img
+      src="dossiers/elizabeth-kuroda/ps014-bell-clerk.jpeg"
+      alt="PS-014 The Bell Clerk"
+      class="dossier-cover"
+    >
+
+    <div class="dossier-folder-info">
+      <h3>THE BELL CLERK</h3>
+      <p>RECONCILIATION PENDING</p>
+
+      <div class="dossier-entry">
+        <span>CLAIMANT</span>
+        <strong>ELIZABETH KURODA</strong>
+      </div>
+
+      <div class="dossier-entry">
+        <span>MISSING CONTACT</span>
+        <strong>REINA KURODA</strong>
+      </div>
+
+      <div class="dossier-entry">
+        <span>RECORD TYPE</span>
+        <strong>25-CHAPTER CASE FILE</strong>
+      </div>
+    </div>
+
+    <div class="dossier-open">
+      OPEN DOSSIER →
+    </div>
+  </div>
+</a>
