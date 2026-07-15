@@ -795,3 +795,178 @@ OPENING ARCHIVE...`
     </div>
   </div>
 </a>
+
+
+.dossier-folder {
+  position: relative;
+  display: block;
+  width: min(100%, 430px);
+  margin: 40px auto;
+  padding-top: 42px;
+  color: #171711;
+  text-decoration: none;
+  font-family: "Courier New", monospace;
+  filter: drop-shadow(0 24px 26px rgba(0, 0, 0, 0.65));
+  transition:
+    transform 0.25s ease,
+    filter 0.25s ease;
+}
+
+.dossier-folder:hover {
+  transform: translateY(-8px) rotate(-0.4deg);
+  filter: drop-shadow(0 34px 38px rgba(0, 0, 0, 0.8));
+}
+
+.dossier-folder-tab {
+  position: absolute;
+  top: 0;
+  left: 22px;
+  width: 190px;
+  height: 58px;
+  padding: 15px 18px;
+  background:
+    linear-gradient(
+      180deg,
+      #c4b895,
+      #958a69
+    );
+  border: 1px solid #3b372c;
+  border-bottom: 0;
+  border-radius: 7px 7px 0 0;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+}
+
+.dossier-folder-body {
+  position: relative;
+  z-index: 2;
+  padding: 25px;
+  overflow: hidden;
+  border: 1px solid #3b372c;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.025) 0,
+      rgba(0, 0, 0, 0.025) 1px,
+      transparent 1px,
+      transparent 5px
+    ),
+    linear-gradient(
+      145deg,
+      #c5b994,
+      #8e8364
+    );
+  box-shadow:
+    inset 0 0 75px rgba(42, 28, 10, 0.25);
+}
+
+.dossier-folder-body::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 80% 15%,
+      rgba(62, 38, 13, 0.13),
+      transparent 22%
+    );
+}
+
+.dossier-file-number {
+  display: inline-block;
+  margin-bottom: 18px;
+  padding: 5px 9px;
+  border: 2px solid #27251e;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+}
+
+.dossier-cover {
+  display: block;
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  object-position: center 26%;
+  border: 7px solid #1d1d18;
+  filter:
+    grayscale(35%)
+    contrast(1.14)
+    brightness(0.72);
+  transition:
+    filter 0.3s ease,
+    transform 0.4s ease;
+}
+
+.dossier-folder:hover .dossier-cover {
+  filter:
+    grayscale(10%)
+    contrast(1.18)
+    brightness(0.9);
+  transform: scale(1.015);
+}
+
+.dossier-folder-info {
+  position: relative;
+  z-index: 2;
+  padding-top: 20px;
+}
+
+.dossier-folder-info h3 {
+  margin: 0;
+  font-size: 29px;
+  letter-spacing: 0.03em;
+}
+
+.dossier-folder-info > p {
+  margin: 4px 0 18px;
+  color: #711919;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.dossier-entry {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.24);
+}
+
+.dossier-entry span {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.dossier-entry strong {
+  font-size: 10px;
+}
+
+.dossier-open {
+  position: relative;
+  z-index: 2;
+  margin-top: 17px;
+  padding-top: 14px;
+  border-top: 2px solid #29271f;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+@media (max-width: 600px) {
+  .dossier-folder {
+    width: 100%;
+  }
+
+  .dossier-cover {
+    height: 240px;
+  }
+
+  .dossier-entry {
+    grid-template-columns: 110px 1fr;
+  }
+}
