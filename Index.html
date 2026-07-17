@@ -1,399 +1,1920 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ACCESS-NODE-009</title>
-  <link rel="stylesheet" href="./style.css" />
-</head>
-<body>
-  <div class="scanlines" aria-hidden="true"></div>
+"use strict";
 
-  <header class="topbar">
-    <div class="brand">
-      <span class="dot"></span>
-      <div>
-        <div class="title">ACCESS-NODE-009</div>
-        <div class="sub">REG-U / INTAKE / SUBJECT STATUS: PENDING</div>
-      </div>
-    </div>
+/* =========================================================
+   ACCESS-NODE-009
+   REG-U INTERFACE CONTROLLER
+   ========================================================= */
 
-    <nav class="nav">
-      <a class="chip" href="#" id="themeToggle" title="Flip theme">WE STAYED</a>
-      <a class="chip" href="#verify">VERIFY</a>
-      <a class="chip" href="#music">MUSIC</a>
-      <a class="chip living-text" href="./briefs/" data-hover="INTELLIGENCE FEED">BRIEFS</a>
-    </nav>
-  </header>
+document.addEventListener("DOMContentLoaded", () => {
+  const REGISTRY = {
+    storage: {
+      standing: "regu-standing",
+      subject: "regu-subject",
+      caseTag: "regu-case-tag",
+      theme: "regu-theme",
+      count: "regu-local-count",
+      commands: "regu-command-unlocks",
+      themes: "regu-theme-unlocks",
+      jurisdictionSeen: "regu-jurisdiction-events",
+    },
 
-  <main class="wrap">
-    <section class="panel">
-      <h1>Registry Standing Intake</h1>
-      <p class="muted">
-        Everything Becomes Procedure Eventually.
-      </p>
+    state: {
+      standing: false,
+      subject: "",
+      caseTag: "",
+      theme: "registry",
+      commands: new Set(),
+      unlockedThemes: new Set(["registry", "silver"]),
+      jurisdictionSeen: new Set(),
+      loreTimer: null,
+      terminalHistory: [],
+      terminalHistoryIndex: -1,
+    },
 
-      <!-- REG-U / INTERNAL LORE TICKER (hidden until verified) -->
-      <div id="loreBar" class="lorebar" aria-live="polite" hidden>
-        <span class="lorebar__label">REG-U / INTERNAL</span>
-        <span id="loreText" class="lorebar__text">…</span>
-      </div>
+    elements: {},
 
-      <div class="grid">
-        <div class="card">
-          <h2>STATUS</h2>
-          <div id="statusPill" class="pill">STANDING: UNVERIFIED</div>
+    themes: {
+      registry: {
+        label: "REGISTRY",
+        toggleLabel: "WE STAYED",
+        title: "Registry Standing Intake",
+        subtitle: "Everything Becomes Procedure Eventually.",
+        subjectHeading: "SUBJECT INTAKE",
+        musicHeading: "MUSIC ACCESS",
+        briefsLabel: "BRIEFS",
+        briefsHover: "INTELLIGENCE FEED",
+        statusPending: "STANDING: UNVERIFIED",
+        statusVerified: "STANDING: VERIFIED",
+        terminalPrefix: "REG-U",
+      },
 
-          <div class="terminal" role="region" aria-label="Terminal output">
-            <pre id="terminalOut">REG-U / SCAN / IDLE</pre>
-          </div>
+      silver: {
+        label: "WE STAYED",
+        toggleLabel: "REGISTRY",
+        title: "Survivor Record Resumption",
+        subtitle: "The procedure ended. The record did not.",
+        subjectHeading: "WITNESS RECORD",
+        musicHeading: "RECOVERED AUDIO",
+        briefsLabel: "REMAINS",
+        briefsHover: "SURVIVOR TESTIMONY",
+        statusPending: "WITNESS: UNCONFIRMED",
+        statusVerified: "WITNESS: RECOGNIZED",
+        terminalPrefix: "REMAINS",
+      },
 
-          <div class="row">
-            <button class="btn" id="verifyBtn">VERIFY STANDING</button>
-            <button class="btn ghost" id="resetBtn" title="Clears local standing token">RESET</button>
-          </div>
+      blackwater: {
+        label: "BLACKWATER",
+        toggleLabel: "BLACKWATER",
+        title: "Route Recognition Intake",
+        subtitle: "The route continues after the passenger does not.",
+        subjectHeading: "PASSENGER INTAKE",
+        musicHeading: "BROADCAST ACCESS",
+        briefsLabel: "ROUTE LOGS",
+        briefsHover: "HOUSE LIGHTS STILL ON",
+        statusPending: "PASSENGER: UNCOUNTED",
+        statusVerified: "ALL PRESENT",
+        terminalPrefix: "BLACKWATER",
+      },
 
-          <div class="tiny muted">
-            Note: Non-Compliance will be noted
-          </div>
-        </div>
+      bloomhouse: {
+        label: "BLOOMHOUSE",
+        toggleLabel: "BLOOMHOUSE",
+        title: "Standing and Intervention Review",
+        subtitle: "Protection is not softness. Protection is a verdict.",
+        subjectHeading: "CARE INTAKE",
+        musicHeading: "RESONANCE ARCHIVE",
+        briefsLabel: "CARE RECORDS",
+        briefsHover: "INTERVENTION DOCTRINE",
+        statusPending: "STANDING: CONDITIONAL",
+        statusVerified: "CARE PATH: RECOGNIZED",
+        terminalPrefix: "BLOOMHOUSE",
+      },
 
-        <div class="card" id="verify">
-          <h2>SUBJECT INTAKE</h2>
+      taa: {
+        label: "T.A.A.",
+        toggleLabel: "T.A.A.",
+        title: "Jurisdictional Standing",
+        subtitle: "Consent is load-bearing. All authority follows.",
+        subjectHeading: "CLAIMANT DECLARATION",
+        musicHeading: "RESONANCE CHAMBER",
+        briefsLabel: "DOCTRINE",
+        briefsHover: "JURISDICTIONAL RECORD",
+        statusPending: "CONSENT: UNVERIFIED",
+        statusVerified: "CONSENT: VERIFIED",
+        terminalPrefix: "TAA",
+      },
 
-          <form id="verifyForm" class="form">
-            <label>
-              Legal Designation
-              <input id="subjectName" type="text" placeholder="e.g., Johnny" autocomplete="off" required />
-            </label>
+      propagation: {
+        label: "CULTURAL PROPAGATION",
+        toggleLabel: "PROPAGATION",
+        title: "Public Alignment Intake",
+        subtitle: "Participation has already been interpreted.",
+        subjectHeading: "PARTICIPANT PROFILE",
+        musicHeading: "AUTHORIZED MEDIA",
+        briefsLabel: "INTELLIGENCE FEED",
+        briefsHover: "NARRATIVE ALIGNMENT",
+        statusPending: "ALIGNMENT: PENDING",
+        statusVerified: "ALIGNMENT: ACCEPTED",
+        terminalPrefix: "CPD",
+      },
+    },
 
-            <label>
-              Registry Reference
-              <input id="caseTag" type="text" placeholder="REG-U / INTAKE / 0009" autocomplete="off" />
-            </label>
+    lore: {
+      registry: [
+        "Standing is not ownership.",
+        "A completed form may outlive the person who signed it.",
+        "Unauthorized mercy will be documented as structural interference.",
+        "The Registry does not pursue. It continues processing.",
+        "All claims inherit the burden of proof.",
+        "FILE ACCEPTED. OUTCOME PENDING.",
+      ],
 
-            <label class="checkline">
-              <input id="consentCheck" type="checkbox" />
-             Voluntary Standing Declaration
-            </label>
+      silver: [
+        "We stayed because someone had to remember who left.",
+        "The archive still uses their voices.",
+        "Survival was entered as an administrative discrepancy.",
+        "The procedure ended. Its permissions did not.",
+        "Some records remain open because closure would be dishonest.",
+        "You were not missing. You were filed elsewhere.",
+      ],
 
-            <button class="btn" type="submit">SUBMIT FOR VERIFICATION</button>
-            <div id="formError" class="error" aria-live="polite"></div>
-          </form>
+      blackwater: [
+        "HOUSE LIGHTS STILL ON.",
+        "The route remembers every passenger.",
+        "Applause has become infrastructure.",
+        "Do not follow the bulbs beneath the waterline.",
+        "ALL PRESENT does not mean everyone survived.",
+        "The smile remains. The route continues.",
+      ],
 
-          <div class="idwrap">
-            <canvas id="idCanvas" width="900" height="540"></canvas>
-            <div class="row">
-              <button class="btn ghost" id="downloadBtn" disabled>DOWNLOAD ID</button>
-            </div>
-            <div class="tiny muted">Thank You for your cooperation.</div>
-          </div>
+      bloomhouse: [
+        "Beauty is not permission.",
+        "Standing: Conditional. Anchor required.",
+        "Consent is sacred. Everything else is decoration.",
+        "Protection is not softness. Protection is a verdict.",
+        "Preventive care is not ownership.",
+        "If coercion is present, the room will lie for you.",
+      ],
 
-          <!-- BLOOMHOUSE SCRAP: EG-013 / "Beauty is not permission." -->
-          <!-- BLOOMHOUSE SCRAP: NG-012 / "Standing: Conditional." -->
-          <!-- MESSAGE (ASTRAEA): Consent is load-bearing. Everything else is decoration. -->
-        </div>
-      </div>
-    </section>
+      taa: [
+        "CONSENT VERIFIED.",
+        "UNANIMOUS OR NULL.",
+        "Ownership denied. Jurisdiction without walls.",
+        "Standing may not be inherited through coercion.",
+        "Mercy without consent is still occupation.",
+        "The seam is visible because reality has begun complying.",
+      ],
 
-    <section class="panel" id="music">
-      <h2>MUSIC ACCESS</h2>
-      <p class="muted">Tracks unlock after Standing Verified. (We’ll swap these placeholders for Spotify/Bandcamp embeds.)</p>
+      propagation: [
+        "Public sentiment is not an accident.",
+        "Post again. The system did not recognize your first attempt.",
+        "Engagement has been interpreted as consent.",
+        "Visibility is a controlled resource.",
+        "The feed remembers which version of you performed best.",
+        "Narrative alignment is currently below recommended thresholds.",
+      ],
+    },
 
-      <div class="tracks">
-        <div class="track">
-          <div class="track-head">
-            <div class="track-title">EP I / INTAKE</div>
-            <div class="tiny muted">Unlocked after verification</div>
-          </div>
-          <button class="btn play" data-track="intake" data-unlock="">
-            LOCKED — JURISDICTION NOT YET ESTABLISHED
+    commandResponses: {
+      HELP: () => ({
+        text:
+          "AVAILABLE COMMAND FAMILIES:\n" +
+          "STATUS\n" +
+          "VERIFY STANDING\n" +
+          "LIST THEMES\n" +
+          "SET THEME [NAME]\n" +
+          "OPEN CASE [IDENTIFIER]\n" +
+          "REQUEST LORE\n" +
+          "CLEAR TERMINAL",
+      }),
+
+      STATUS: () => ({
+        text:
+          `NODE: ACCESS-NODE-009\n` +
+          `STANDING: ${REGISTRY.state.standing ? "VERIFIED" : "UNVERIFIED"}\n` +
+          `SUBJECT: ${REGISTRY.state.subject || "UNFILED"}\n` +
+          `THEME: ${REGISTRY.themes[REGISTRY.state.theme].label}\n` +
+          `COMMAND UNLOCKS: ${REGISTRY.state.commands.size}`,
+      }),
+
+      "VERIFY STANDING": () => {
+        REGISTRY.elements.verify?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+
+        return {
+          text:
+            "INTAKE FORM LOCATED.\n" +
+            "VOLUNTARY DECLARATION REQUIRED.\n" +
+            "COERCED SIGNATURES WILL BE REJECTED.",
+        };
+      },
+
+      "REQUEST LORE": () => {
+        const entries =
+          REGISTRY.lore[REGISTRY.state.theme] ||
+          REGISTRY.lore.registry;
+
+        const message =
+          entries[Math.floor(Math.random() * entries.length)];
+
+        return {
+          text: `INTERNAL RECORD:\n${message}`,
+        };
+      },
+
+      "LIST THEMES": () => {
+        const lines = Object.keys(REGISTRY.themes).map((themeName) => {
+          const unlocked = REGISTRY.state.unlockedThemes.has(themeName);
+          return `${unlocked ? "[OPEN]" : "[SEALED]"} ${
+            REGISTRY.themes[themeName].label
+          }`;
+        });
+
+        return {
+          text: `JURISDICTION PRESENTATIONS:\n${lines.join("\n")}`,
+        };
+      },
+
+      "CLEAR TERMINAL": () => {
+        REGISTRY.clearTerminal();
+        return {
+          text: "TERMINAL CLEARED.",
+          suppressPrefix: true,
+        };
+      },
+
+      "STANDING VERIFIED": () => ({
+        text:
+          "PHRASE RECOGNIZED.\n" +
+          "LIMITED CLAIMANT ACCESS CONFIRMED.",
+        unlockCommand: "STANDING VERIFIED",
+      }),
+
+      "WE STAYED": () => ({
+        text:
+          "SURVIVOR PRESENTATION RECOGNIZED.\n" +
+          "SILVER RECORD LAYER AVAILABLE.",
+        theme: "silver",
+        unlockCommand: "WE STAYED",
+      }),
+
+      "ALL PRESENT": () => ({
+        text:
+          "BLACKWATER RECOGNITION EVENT ACTIVE.\n" +
+          "PASSENGER COUNT ACCEPTED.\n" +
+          "HOUSE LIGHTS STILL ON.",
+        unlockTheme: "blackwater",
+        theme: "blackwater",
+        unlockCommand: "ALL PRESENT",
+        jurisdiction: {
+          title: "BLACKWATER DIVISION",
+          body:
+            "THE ROUTE HAS RECOGNIZED YOUR PRESENCE.\n" +
+            "DO NOT FOLLOW THE APPLAUSE.",
+          stamp: "ALL PRESENT",
+          key: "blackwater-open",
+        },
+      }),
+
+      "THE ROUTE CONTINUES": () => ({
+        text:
+          "ROUTE MEMORY ACTIVE.\n" +
+          "DESTINATION OMITTED.\n" +
+          "PASSENGER STATUS RETAINED.",
+        unlockTheme: "blackwater",
+        unlockCommand: "THE ROUTE CONTINUES",
+      }),
+
+      "HOUSE LIGHTS STILL ON": () => ({
+        text:
+          "VENUE POWER DETECTED BELOW WATERLINE.\n" +
+          "NO AUTHORIZED PERFORMANCE IS SCHEDULED.",
+        unlockTheme: "blackwater",
+        unlockCommand: "HOUSE LIGHTS STILL ON",
+      }),
+
+      "BEAUTY IS NOT PERMISSION": () => ({
+        text:
+          "BLOOMHOUSE SCRAP EG-013 RECOGNIZED.\n" +
+          "INTERVENTION DOCTRINE AVAILABLE.",
+        unlockTheme: "bloomhouse",
+        theme: "bloomhouse",
+        unlockCommand: "BEAUTY IS NOT PERMISSION",
+        jurisdiction: {
+          title: "BLOOMHOUSE",
+          body:
+            "CARE AUTHORITY RECOGNIZED.\n" +
+            "OWNERSHIP AUTHORITY DENIED.",
+          stamp: "INTERVENTION WITHOUT POSSESSION",
+          key: "bloomhouse-open",
+        },
+      }),
+
+      "PREVENTIVE BLOOM": () => ({
+        text:
+          "VE-001 DOCTRINE INDEXED.\n" +
+          "RESPONSE MAY BEGIN BEFORE CATASTROPHE.",
+        unlockTheme: "bloomhouse",
+        theme: "bloomhouse",
+        unlockCommand: "PREVENTIVE BLOOM",
+      }),
+
+      "CONSENT VERIFIED": () => ({
+        text:
+          "T.A.A. AXIOM ACCEPTED.\n" +
+          "JURISDICTION MAY PROCEED.",
+        unlockTheme: "taa",
+        theme: "taa",
+        unlockCommand: "CONSENT VERIFIED",
+        jurisdiction: {
+          title: "T.A.A. JURISDICTION",
+          body:
+            "CONSENT HAS BEEN ENTERED AS STRUCTURAL LAW.\n" +
+            "ALL CONFLICTING CLAIMS ARE SUSPENDED.",
+          stamp: "OWNERSHIP DENIED",
+          key: "taa-open",
+        },
+      }),
+
+      "UNANIMOUS OR NULL": () => ({
+        text:
+          "TRI-SEAL CONDITION RECOGNIZED.\n" +
+          "PARTIAL AUTHORITY REJECTED.",
+        unlockTheme: "taa",
+        unlockCommand: "UNANIMOUS OR NULL",
+      }),
+
+      "POST AGAIN": () => ({
+        text:
+          "CULTURAL PROPAGATION SIGNAL ACQUIRED.\n" +
+          "THE FIRST POST WAS RECEIVED.\n" +
+          "IT WAS SIMPLY NOT DISTRIBUTED.",
+        unlockTheme: "propagation",
+        theme: "propagation",
+        unlockCommand: "POST AGAIN",
+        jurisdiction: {
+          title: "CULTURAL PROPAGATION DIVISION",
+          body:
+            "PUBLIC VISIBILITY HAS BEEN RECLASSIFIED\n" +
+            "AS A MANAGED OUTCOME.",
+          stamp: "NARRATIVE ALIGNED",
+          key: "propagation-open",
+        },
+      }),
+
+      "CULTURAL PROPAGATION": () => ({
+        text:
+          "DIVISION IDENTIFIER RECOGNIZED.\n" +
+          "AUTHORIZED MEDIA PRESENTATION AVAILABLE.",
+        unlockTheme: "propagation",
+        theme: "propagation",
+        unlockCommand: "CULTURAL PROPAGATION",
+      }),
+
+      "BVF-10114": () => ({
+        text:
+          "IDENTIFIER RECOGNIZED.\n" +
+          "ARCHIVE: BLACK VEIL FREQUENCY\n" +
+          "CLASSIFICATION: POSTHUMOUS TRANSMISSION\n\n" +
+          "The broadcast did not begin when the television was powered on.\n" +
+          "It merely became visible.",
+        unlockCommand: "BVF-10114",
+      }),
+
+      "TR-011": () => ({
+        text:
+          "TERMINAL RELAY 011 LOCATED.\n" +
+          "STATUS: STILL RECEIVING\n\n" +
+          "Personnel were instructed not to acknowledge\n" +
+          "faces appearing between frames.",
+        unlockCommand: "TR-011",
+      }),
+
+      "BLACK VEIL FREQUENCY": () => ({
+        text:
+          "PROJECT INDEX UNSEALED.\n\n" +
+          "A signal dressed itself in mourning fabric\n" +
+          "so the dead would recognize it as formal correspondence.",
+        unlockCommand: "BLACK VEIL FREQUENCY",
+      }),
+
+      "THE VEIL IS LISTENING": () => ({
+        text:
+          "PHRASE ACCEPTED.\n\n" +
+          "Microphone permission was never requested.\n" +
+          "Audio collection began before your arrival.",
+        unlockCommand: "THE VEIL IS LISTENING",
+      }),
+
+      "PS-014": () => ({
+        text:
+          "CASE PS-014 LOCATED.\n" +
+          "DESIGNATION: THE BELL CLERK\n" +
+          "CLAIMANT: ELIZABETH KURODA\n" +
+          "RECONCILIATION: PENDING",
+        unlockCommand: "PS-014",
+      }),
+
+      "OPEN PS-014": () => {
+        const link = document.querySelector(".elizabeth-kuroda-file");
+
+        if (link) {
+          setTimeout(() => {
+            link.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+
+            link.classList.add("is-highlighted");
+
+            window.setTimeout(() => {
+              link.classList.remove("is-highlighted");
+            }, 2500);
+          }, 400);
+        }
+
+        return {
+          text:
+            "DOSSIER PS-014 RELEASED TO CURRENT VIEW.\n" +
+            "RECONCILIATION REMAINS PENDING.",
+          unlockCommand: "OPEN PS-014",
+        };
+      },
+    },
+
+    deniedResponses: [
+      "INPUT NOT RECOGNIZED.",
+      "CLEARANCE INSUFFICIENT.",
+      "THE ARCHIVE DECLINES TO ANSWER.",
+      "NO FILE FOUND. SOMETHING FOUND YOU.",
+      "COMMAND REJECTED BY ACTIVE JURISDICTION.",
+      "THE REQUEST WAS RECEIVED FROM THE WRONG SIDE.",
+      "SUBJECT IS TYPING FROM AN UNRECOGNIZED OUTCOME.",
+      "THE FILE EXISTS. ACCESS DOES NOT.",
+    ],
+
+    init() {
+      this.cacheElements();
+      this.loadState();
+      this.buildThemeSelector();
+      this.buildTerminalInput();
+      this.bindEvents();
+      this.applyTheme(this.state.theme, false);
+      this.restoreStanding();
+      this.updateThemeSelector();
+      this.updateLockedContent();
+      this.updateCounter();
+      this.beginLoreRotation();
+      this.processDateLocks();
+      this.renderCanvasPlaceholder();
+      this.spawnAmbientGeometry();
+    },
+
+    cacheElements() {
+      this.elements = {
+        body: document.body,
+        topbar: document.querySelector(".topbar"),
+        brandSub: document.querySelector(".brand .sub"),
+        themeToggle: document.getElementById("themeToggle"),
+        verify: document.getElementById("verify"),
+        verifyBtn: document.getElementById("verifyBtn"),
+        resetBtn: document.getElementById("resetBtn"),
+        verifyForm: document.getElementById("verifyForm"),
+        subjectName: document.getElementById("subjectName"),
+        caseTag: document.getElementById("caseTag"),
+        consentCheck: document.getElementById("consentCheck"),
+        formError: document.getElementById("formError"),
+        statusPill: document.getElementById("statusPill"),
+        terminalOut: document.getElementById("terminalOut"),
+        loreBar: document.getElementById("loreBar"),
+        loreText: document.getElementById("loreText"),
+        idCanvas: document.getElementById("idCanvas"),
+        downloadBtn: document.getElementById("downloadBtn"),
+        counter: document.getElementById("counter"),
+        musicSection: document.getElementById("music"),
+        playButtons: [...document.querySelectorAll(".play")],
+        fxLayer: document.getElementById("fxLayer"),
+        jurisdictionEvent: document.getElementById("jurisdictionEvent"),
+        jurisdictionTitle: document.getElementById("jurisdictionTitle"),
+        jurisdictionBody: document.getElementById("jurisdictionBody"),
+        jurisdictionStamp: document.getElementById("jurisdictionStamp"),
+        intakeTitle: document.querySelector(".panel h1"),
+        intakeSubtitle: document.querySelector(".panel h1 + .muted"),
+        subjectHeading: document.querySelector("#verify h2"),
+        musicHeading: document.querySelector("#music > h2"),
+        briefsLink: document.querySelector('a[href="./briefs/"]'),
+      };
+    },
+
+    loadState() {
+      const standing =
+        localStorage.getItem(this.storage.standing) === "true";
+
+      const subject =
+        localStorage.getItem(this.storage.subject) || "";
+
+      const caseTag =
+        localStorage.getItem(this.storage.caseTag) || "";
+
+      const theme =
+        localStorage.getItem(this.storage.theme) || "registry";
+
+      const commands = this.readStoredArray(this.storage.commands);
+      const themes = this.readStoredArray(this.storage.themes);
+      const events = this.readStoredArray(
+        this.storage.jurisdictionSeen
+      );
+
+      this.state.standing = standing;
+      this.state.subject = subject;
+      this.state.caseTag = caseTag;
+      this.state.theme = this.themes[theme] ? theme : "registry";
+      this.state.commands = new Set(commands);
+      this.state.jurisdictionSeen = new Set(events);
+
+      this.state.unlockedThemes = new Set([
+        "registry",
+        "silver",
+        ...themes.filter((name) => this.themes[name]),
+      ]);
+    },
+
+    readStoredArray(key) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(key) || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    },
+
+    saveState() {
+      localStorage.setItem(
+        this.storage.standing,
+        String(this.state.standing)
+      );
+
+      localStorage.setItem(
+        this.storage.subject,
+        this.state.subject
+      );
+
+      localStorage.setItem(
+        this.storage.caseTag,
+        this.state.caseTag
+      );
+
+      localStorage.setItem(
+        this.storage.theme,
+        this.state.theme
+      );
+
+      localStorage.setItem(
+        this.storage.commands,
+        JSON.stringify([...this.state.commands])
+      );
+
+      localStorage.setItem(
+        this.storage.themes,
+        JSON.stringify([...this.state.unlockedThemes])
+      );
+
+      localStorage.setItem(
+        this.storage.jurisdictionSeen,
+        JSON.stringify([...this.state.jurisdictionSeen])
+      );
+    },
+
+    bindEvents() {
+      this.elements.themeToggle?.addEventListener("click", (event) => {
+        event.preventDefault();
+
+        if (event.shiftKey) {
+          this.toggleThemeSelector();
+          return;
+        }
+
+        const nextTheme =
+          this.state.theme === "registry" ? "silver" : "registry";
+
+        this.applyTheme(nextTheme);
+      });
+
+      let holdTimer = null;
+
+      this.elements.themeToggle?.addEventListener(
+        "pointerdown",
+        () => {
+          holdTimer = window.setTimeout(() => {
+            this.toggleThemeSelector(true);
+          }, 700);
+        }
+      );
+
+      ["pointerup", "pointercancel", "pointerleave"].forEach(
+        (eventName) => {
+          this.elements.themeToggle?.addEventListener(
+            eventName,
+            () => {
+              window.clearTimeout(holdTimer);
+            }
+          );
+        }
+      );
+
+      this.elements.verifyBtn?.addEventListener("click", () => {
+        this.elements.verify?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+
+        this.writeTerminal(
+          "INTAKE FORM READY.\nVOLUNTARY STANDING DECLARATION REQUIRED."
+        );
+
+        this.elements.subjectName?.focus();
+      });
+
+      this.elements.verifyForm?.addEventListener(
+        "submit",
+        (event) => {
+          event.preventDefault();
+          this.submitVerification();
+        }
+      );
+
+      this.elements.resetBtn?.addEventListener("click", () => {
+        this.resetStanding();
+      });
+
+      this.elements.downloadBtn?.addEventListener("click", () => {
+        this.downloadIdCard();
+      });
+
+      this.elements.playButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          this.handleTrackClick(button);
+        });
+      });
+
+      this.elements.jurisdictionEvent?.addEventListener(
+        "click",
+        () => {
+          this.closeJurisdictionEvent();
+        }
+      );
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          this.closeThemeSelector();
+          this.closeJurisdictionEvent();
+        }
+      });
+    },
+
+    buildThemeSelector() {
+      if (document.getElementById("themeSelector")) {
+        this.elements.themeSelector =
+          document.getElementById("themeSelector");
+
+        this.elements.themeOptions = [
+          ...document.querySelectorAll(".theme-option"),
+        ];
+
+        this.bindThemeOptions();
+        return;
+      }
+
+      const selector = document.createElement("div");
+      selector.id = "themeSelector";
+      selector.className = "theme-selector";
+      selector.hidden = true;
+      selector.setAttribute("aria-label", "Jurisdiction themes");
+
+      Object.entries(this.themes).forEach(([name, theme]) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "theme-option";
+        button.dataset.theme = name;
+        button.textContent = theme.label;
+        selector.appendChild(button);
+      });
+
+      this.elements.topbar?.insertAdjacentElement(
+        "afterend",
+        selector
+      );
+
+      this.elements.themeSelector = selector;
+      this.elements.themeOptions = [
+        ...selector.querySelectorAll(".theme-option"),
+      ];
+
+      this.bindThemeOptions();
+    },
+
+    bindThemeOptions() {
+      this.elements.themeOptions?.forEach((button) => {
+        button.addEventListener("click", () => {
+          const themeName = button.dataset.theme;
+
+          if (!this.state.unlockedThemes.has(themeName)) {
+            this.writeTerminal(
+              `THEME SEALED: ${this.themes[themeName].label}\n` +
+                "A RECOGNIZED PHRASE OR IDENTIFIER IS REQUIRED."
+            );
+
+            return;
+          }
+
+          this.applyTheme(themeName);
+          this.closeThemeSelector();
+        });
+      });
+    },
+
+    buildTerminalInput() {
+      const terminal =
+        this.elements.terminalOut?.closest(".terminal");
+
+      if (!terminal) return;
+
+      let terminalForm = document.getElementById("terminalForm");
+
+      if (!terminalForm) {
+        terminalForm = document.createElement("form");
+        terminalForm.id = "terminalForm";
+        terminalForm.className = "terminal-command-form";
+        terminalForm.innerHTML = `
+          <label class="sr-only" for="terminalInput">
+            Enter Registry command
+          </label>
+
+          <span class="terminal-prompt" aria-hidden="true">&gt;</span>
+
+          <input
+            id="terminalInput"
+            class="terminal-input"
+            type="text"
+            autocomplete="off"
+            autocapitalize="characters"
+            spellcheck="false"
+            placeholder="ENTER COMMAND"
+            maxlength="80"
+          />
+
+          <button class="terminal-submit" type="submit">
+            EXECUTE
           </button>
-          <div class="embed" data-embed="intake"></div>
-        </div>
+        `;
 
-        <div class="track">
-          <div class="track-head">
-            <div class="track-title">EP II / CONTAINMENT</div>
-            <div class="tiny muted">Unlocked after verification (we’ll add the “leak” later)</div>
-          </div>
-          <button class="btn play" data-track="containment" data-unlock="">
-            LOCKED — SIGNATURE REQUIRED
-          </button>
-          <div class="embed" data-embed="containment"></div>
-        </div>
+        terminal.appendChild(terminalForm);
+      }
 
-        <div class="track">
-          <div class="track-head">
-            <div class="track-title">EP III / SIGNATURE REQUIRED</div>
-            <div class="tiny muted">Date-locked example</div>
-          </div>
-          <button class="btn play" data-track="signature" data-unlock="2026-04-01T00:00:00-06:00">
-            LOCKED — COMPLIANCE REQUIRED
-          </button>
-          <div class="embed" data-embed="signature"></div>
-        </div>
-      </div>
+      this.elements.terminalForm = terminalForm;
+      this.elements.terminalInput =
+        document.getElementById("terminalInput");
 
-      <footer class="footer">
-        <div class="tiny muted">COUNTER: <span id="counter">0</span> VERIFIED SUBJECTS (LOCAL)</div>
-        <div class="tiny muted">REG-U / FILE ACCEPTED</div>
-      </footer>
-    </section>
-  </main>
+      terminalForm.addEventListener("submit", (event) => {
+        event.preventDefault();
 
-  <!-- FX LAYER: seams / geometry / stamps (spawned by JS, non-interactive) -->
-  <div id="fxLayer" class="fx-layer" aria-hidden="true"></div>
+        const rawInput =
+          this.elements.terminalInput?.value || "";
 
-  <!-- JURISDICTION EVENT OVERLAY (optional milestone popups) -->
-  <div id="jurisdictionEvent" class="jurisdiction" hidden aria-hidden="true">
-    <div class="jurisdiction__panel">
-      <div id="jurisdictionTitle" class="jurisdiction__title"></div>
-      <div id="jurisdictionBody" class="jurisdiction__body"></div>
-      <div id="jurisdictionStamp" class="jurisdiction__stamp"></div>
-    </div>
-  </div>
+        this.processTerminalCommand(rawInput);
 
-  <script src="./main.js"></script>
-</body>
-</html>
+        if (this.elements.terminalInput) {
+          this.elements.terminalInput.value = "";
+        }
+      });
 
-<!-- SCRAP/01 — BLOOMHOUSE / EG-013: "Beauty is not permission." -->
-<!-- SCRAP/02 — BLOOMHOUSE / NG-012: "Standing: Conditional. Anchor required." -->
-<!-- SCRAP/03 — BLOOMHOUSE / MG-011: "If coercion is present, the room will lie for you. Do not believe it." -->
-<!-- SCRAP/04 — BLOOMHOUSE / VG-010: "Protection is not softness. Protection is a verdict." -->
+      this.elements.terminalInput?.addEventListener(
+        "keydown",
+        (event) => {
+          if (event.key === "ArrowUp") {
+            event.preventDefault();
+            this.navigateTerminalHistory(-1);
+          }
 
-<!-- SCRAP/05 — EUONIA / NOTICE: Consent is a load-bearing axiom. All claims inherit the proof burden. -->
-<!-- SCRAP/06 — EUONIA / STANDING CASCADE: Tri-Seal required. Katelyn + Elowen + Aurora. Unanimity enforced. -->
-<!-- SCRAP/07 — EUONIA / VENUE SHIFT FAILSAFE: Cold Chamber available. Standing preserved. -->
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            this.navigateTerminalHistory(1);
+          }
+        }
+      );
+    },
 
-<!-- SCRAP/08 — ANGELA / MEMO: "You introduced unauthorized witnesses into a sealed venue." -->
-<!-- SCRAP/09 — ANGELA / ADDENDUM: "Do not romanticize the mercy rooms. They are compliance furniture." -->
-<!-- SCRAP/10 — ANGELA / STATUS: Healer role deprecated. Warden protocols active. -->
+    navigateTerminalHistory(direction) {
+      const history = this.state.terminalHistory;
 
-<!-- SCRAP/11 — ASTRAEA / NOTE: "Consent is sacred. If they take it, they forfeit standing." -->
-<!-- SCRAP/12 — ASTRAEA / VERDICT SEED: "Ownership denied. Jurisdiction without walls." -->
+      if (!history.length || !this.elements.terminalInput) return;
 
+      this.state.terminalHistoryIndex += direction;
 
+      if (this.state.terminalHistoryIndex < 0) {
+        this.state.terminalHistoryIndex = 0;
+      }
 
+      if (
+        this.state.terminalHistoryIndex >= history.length
+      ) {
+        this.state.terminalHistoryIndex = history.length;
+        this.elements.terminalInput.value = "";
+        return;
+      }
 
+      this.elements.terminalInput.value =
+        history[this.state.terminalHistoryIndex];
+    },
 
-<a href="dossiers/elizabeth-kuroda/index.html"
-   class="dossier-folder elizabeth-kuroda-file">
+    processTerminalCommand(rawInput) {
+      const normalized = this.normalizeCommand(rawInput);
 
-  <div class="dossier-folder-tab">
-    ACTIVE CASE
-  </div>
+      if (!normalized) return;
 
-  <div class="dossier-folder-body">
-    <div class="dossier-file-number">
-      PS-014
-    </div>
+      this.state.terminalHistory.push(normalized);
+      this.state.terminalHistoryIndex =
+        this.state.terminalHistory.length;
 
-    <img
-      src="dossiers/elizabeth-kuroda/ps014-bell-clerk.jpeg"
-      alt="PS-014 The Bell Clerk"
-      class="dossier-cover"
-    >
+      this.appendTerminal(`> ${normalized}`, "command");
 
-    <div class="dossier-folder-info">
-      <h3>THE BELL CLERK</h3>
-      <p>RECONCILIATION PENDING</p>
+      const setThemeMatch = normalized.match(
+        /^SET THEME\s+(.+)$/
+      );
 
-      <div class="dossier-entry">
-        <span>CLAIMANT</span>
-        <strong>ELIZABETH KURODA</strong>
-      </div>
+      if (setThemeMatch) {
+        this.handleSetThemeCommand(setThemeMatch[1]);
+        return;
+      }
 
-      <div class="dossier-entry">
-        <span>MISSING CONTACT</span>
-        <strong>REINA KURODA</strong>
-      </div>
+      const openCaseMatch = normalized.match(
+        /^OPEN CASE\s+(.+)$/
+      );
 
-      <div class="dossier-entry">
-        <span>RECORD TYPE</span>
-        <strong>25-CHAPTER CASE FILE</strong>
-      </div>
-    </div>
+      if (openCaseMatch) {
+        this.handleOpenCaseCommand(openCaseMatch[1]);
+        return;
+      }
 
-    <div class="dossier-open">
-      OPEN DOSSIER →
-    </div>
-  </div>
-</a>
+      const handler = this.commandResponses[normalized];
 
+      if (!handler) {
+        const denied =
+          this.deniedResponses[
+            Math.floor(Math.random() * this.deniedResponses.length)
+          ];
 
-.dossier-folder {
-  position: relative;
-  display: block;
-  width: min(100%, 430px);
-  margin: 40px auto;
-  padding-top: 42px;
-  color: #171711;
-  text-decoration: none;
-  font-family: "Courier New", monospace;
-  filter: drop-shadow(0 24px 26px rgba(0, 0, 0, 0.65));
-  transition:
-    transform 0.25s ease,
-    filter 0.25s ease;
-}
+        this.appendTerminal(denied, "denied");
+        this.spawnGlitch();
+        return;
+      }
 
-.dossier-folder:hover {
-  transform: translateY(-8px) rotate(-0.4deg);
-  filter: drop-shadow(0 34px 38px rgba(0, 0, 0, 0.8));
-}
+      const result = handler();
 
-.dossier-folder-tab {
-  position: absolute;
-  top: 0;
-  left: 22px;
-  width: 190px;
-  height: 58px;
-  padding: 15px 18px;
-  background:
-    linear-gradient(
-      180deg,
-      #c4b895,
-      #958a69
-    );
-  border: 1px solid #3b372c;
-  border-bottom: 0;
-  border-radius: 7px 7px 0 0;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.15em;
-}
+      if (result.unlockCommand) {
+        this.state.commands.add(result.unlockCommand);
+      }
 
-.dossier-folder-body {
-  position: relative;
-  z-index: 2;
-  padding: 25px;
-  overflow: hidden;
-  border: 1px solid #3b372c;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.025) 0,
-      rgba(0, 0, 0, 0.025) 1px,
-      transparent 1px,
-      transparent 5px
-    ),
-    linear-gradient(
-      145deg,
-      #c5b994,
-      #8e8364
-    );
-  box-shadow:
-    inset 0 0 75px rgba(42, 28, 10, 0.25);
-}
+      if (result.unlockTheme) {
+        this.unlockTheme(result.unlockTheme);
+      }
 
-.dossier-folder-body::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(
-      circle at 80% 15%,
-      rgba(62, 38, 13, 0.13),
-      transparent 22%
-    );
-}
+      if (
+        result.theme &&
+        this.state.unlockedThemes.has(result.theme)
+      ) {
+        this.applyTheme(result.theme);
+      }
 
-.dossier-file-number {
-  display: inline-block;
-  margin-bottom: 18px;
-  padding: 5px 9px;
-  border: 2px solid #27251e;
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: 0.09em;
-}
+      if (result.text) {
+        this.appendTerminal(
+          result.text,
+          result.suppressPrefix ? "system" : "success"
+        );
+      }
 
-.dossier-cover {
-  display: block;
-  width: 100%;
-  height: 300px;
-  object-fit: cover;
-  object-position: center 26%;
-  border: 7px solid #1d1d18;
-  filter:
-    grayscale(35%)
-    contrast(1.14)
-    brightness(0.72);
-  transition:
-    filter 0.3s ease,
-    transform 0.4s ease;
-}
+      if (result.jurisdiction) {
+        this.showJurisdictionEvent(result.jurisdiction);
+      }
 
-.dossier-folder:hover .dossier-cover {
-  filter:
-    grayscale(10%)
-    contrast(1.18)
-    brightness(0.9);
-  transform: scale(1.015);
-}
+      this.saveState();
+      this.updateLockedContent();
+    },
 
-.dossier-folder-info {
-  position: relative;
-  z-index: 2;
-  padding-top: 20px;
-}
+    normalizeCommand(value) {
+      return String(value)
+        .trim()
+        .replace(/\s+/g, " ")
+        .toUpperCase();
+    },
 
-.dossier-folder-info h3 {
-  margin: 0;
-  font-size: 29px;
-  letter-spacing: 0.03em;
-}
+    handleSetThemeCommand(rawTheme) {
+      const requested = rawTheme
+        .trim()
+        .toLowerCase()
+        .replace(/\./g, "")
+        .replace(/\s+/g, " ");
 
-.dossier-folder-info > p {
-  margin: 4px 0 18px;
-  color: #711919;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-}
+      const aliases = {
+        registry: "registry",
+        default: "registry",
+        "we stayed": "silver",
+        silver: "silver",
+        survivor: "silver",
+        blackwater: "blackwater",
+        midway: "blackwater",
+        bloomhouse: "bloomhouse",
+        bloom: "bloomhouse",
+        taa: "taa",
+        "the authority above": "taa",
+        propagation: "propagation",
+        "cultural propagation": "propagation",
+        cpd: "propagation",
+      };
 
-.dossier-entry {
-  display: grid;
-  grid-template-columns: 130px 1fr;
-  gap: 10px;
-  padding: 8px 0;
-  border-top: 1px solid rgba(0, 0, 0, 0.24);
-}
+      const themeName = aliases[requested];
 
-.dossier-entry span {
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-}
+      if (!themeName || !this.themes[themeName]) {
+        this.appendTerminal(
+          "THEME IDENTIFIER NOT RECOGNIZED.",
+          "denied"
+        );
+        return;
+      }
 
-.dossier-entry strong {
-  font-size: 10px;
-}
+      if (!this.state.unlockedThemes.has(themeName)) {
+        this.appendTerminal(
+          `${this.themes[themeName].label} REMAINS SEALED.`,
+          "denied"
+        );
+        return;
+      }
 
-.dossier-open {
-  position: relative;
-  z-index: 2;
-  margin-top: 17px;
-  padding-top: 14px;
-  border-top: 2px solid #29271f;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-}
+      this.applyTheme(themeName);
 
-@media (max-width: 600px) {
-  .dossier-folder {
-    width: 100%;
-  }
+      this.appendTerminal(
+        `PRESENTATION CHANGED:\n${this.themes[themeName].label}`,
+        "success"
+      );
+    },
 
-  .dossier-cover {
-    height: 240px;
-  }
+    handleOpenCaseCommand(rawCase) {
+      const caseName = this.normalizeCommand(rawCase);
 
-  .dossier-entry {
-    grid-template-columns: 110px 1fr;
-  }
-}
+      const caseCommands = {
+        "PS-014": "OPEN PS-014",
+        "THE BELL CLERK": "OPEN PS-014",
+        "ELIZABETH KURODA": "OPEN PS-014",
+      };
 
+      const matchedCommand = caseCommands[caseName];
+
+      if (!matchedCommand) {
+        this.appendTerminal(
+          `CASE NOT LOCATED: ${caseName}`,
+          "denied"
+        );
+        return;
+      }
+
+      const result = this.commandResponses[matchedCommand]();
+
+      this.state.commands.add(matchedCommand);
+      this.appendTerminal(result.text, "success");
+      this.saveState();
+      this.updateLockedContent();
+    },
+
+    unlockTheme(themeName) {
+      if (!this.themes[themeName]) return;
+
+      const wasLocked =
+        !this.state.unlockedThemes.has(themeName);
+
+      this.state.unlockedThemes.add(themeName);
+      this.updateThemeSelector();
+      this.saveState();
+
+      if (wasLocked) {
+        this.spawnStamp(
+          `${this.themes[themeName].label} / ACCESS GRANTED`
+        );
+      }
+    },
+
+    applyTheme(themeName, save = true) {
+      if (!this.themes[themeName]) {
+        themeName = "registry";
+      }
+
+      if (!this.state.unlockedThemes.has(themeName)) {
+        themeName = "registry";
+      }
+
+      this.state.theme = themeName;
+
+      this.elements.body.dataset.theme = themeName;
+
+      const theme = this.themes[themeName];
+
+      if (this.elements.themeToggle) {
+        this.elements.themeToggle.textContent =
+          theme.toggleLabel;
+
+        this.elements.themeToggle.dataset.activeTheme =
+          themeName;
+
+        this.elements.themeToggle.title =
+          `Current presentation: ${theme.label}. ` +
+          "Tap to return or hold for jurisdiction themes.";
+      }
+
+      if (this.elements.intakeTitle) {
+        this.elements.intakeTitle.textContent = theme.title;
+      }
+
+      if (this.elements.intakeSubtitle) {
+        this.elements.intakeSubtitle.textContent =
+          theme.subtitle;
+      }
+
+      if (this.elements.subjectHeading) {
+        this.elements.subjectHeading.textContent =
+          theme.subjectHeading;
+      }
+
+      if (this.elements.musicHeading) {
+        this.elements.musicHeading.textContent =
+          theme.musicHeading;
+      }
+
+      if (this.elements.briefsLink) {
+        this.elements.briefsLink.textContent =
+          theme.briefsLabel;
+
+        this.elements.briefsLink.dataset.hover =
+          theme.briefsHover;
+      }
+
+      if (this.elements.brandSub) {
+        this.elements.brandSub.textContent =
+          `${theme.terminalPrefix} / INTAKE / SUBJECT STATUS: ` +
+          `${this.state.standing ? "VERIFIED" : "PENDING"}`;
+      }
+
+      this.updateStandingDisplay();
+      this.updateThemeReveals();
+      this.updateThemeSelector();
+      this.beginLoreRotation();
+      this.spawnThemeTransition(themeName);
+
+      if (save) {
+        this.saveState();
+      }
+    },
+
+    updateThemeSelector() {
+      this.elements.themeOptions?.forEach((button) => {
+        const themeName = button.dataset.theme;
+        const unlocked =
+          this.state.unlockedThemes.has(themeName);
+
+        button.disabled = !unlocked;
+        button.dataset.locked = String(!unlocked);
+        button.dataset.active = String(
+          this.state.theme === themeName
+        );
+
+        button.textContent = unlocked
+          ? this.themes[themeName].label
+          : `${this.themes[themeName].label} / SEALED`;
+      });
+    },
+
+    toggleThemeSelector(forceOpen = false) {
+      const selector = this.elements.themeSelector;
+
+      if (!selector) return;
+
+      if (forceOpen) {
+        selector.hidden = false;
+      } else {
+        selector.hidden = !selector.hidden;
+      }
+
+      this.elements.themeToggle?.setAttribute(
+        "aria-expanded",
+        String(!selector.hidden)
+      );
+    },
+
+    closeThemeSelector() {
+      if (!this.elements.themeSelector) return;
+
+      this.elements.themeSelector.hidden = true;
+
+      this.elements.themeToggle?.setAttribute(
+        "aria-expanded",
+        "false"
+      );
+    },
+
+    updateThemeReveals() {
+      document
+        .querySelectorAll("[data-visible-themes]")
+        .forEach((element) => {
+          const allowedThemes = element.dataset.visibleThemes
+            .split(/\s+/)
+            .filter(Boolean);
+
+          element.hidden = !allowedThemes.includes(
+            this.state.theme
+          );
+        });
+
+      document
+        .querySelectorAll("[data-requires-theme]")
+        .forEach((element) => {
+          const required = element.dataset.requiresTheme;
+          const visible = required === this.state.theme;
+
+          element.hidden = !visible;
+        });
+    },
+
+    submitVerification() {
+      const subject =
+        this.elements.subjectName?.value.trim() || "";
+
+      const caseTag =
+        this.elements.caseTag?.value.trim() ||
+        "REG-U / INTAKE / 0009";
+
+      const consent =
+        Boolean(this.elements.consentCheck?.checked);
+
+      this.clearFormError();
+
+      if (!subject) {
+        this.showFormError(
+          "LEGAL DESIGNATION REQUIRED."
+        );
+        this.elements.subjectName?.focus();
+        return;
+      }
+
+      if (!consent) {
+        this.showFormError(
+          "VOLUNTARY STANDING DECLARATION REQUIRED. " +
+            "COERCED VERIFICATION IS INVALID."
+        );
+
+        this.elements.consentCheck?.focus();
+        return;
+      }
+
+      const previouslyVerified = this.state.standing;
+
+      this.state.standing = true;
+      this.state.subject = subject;
+      this.state.caseTag = caseTag;
+
+      localStorage.setItem(
+        this.storage.standing,
+        "true"
+      );
+
+      localStorage.setItem(
+        this.storage.subject,
+        subject
+      );
+
+      localStorage.setItem(
+        this.storage.caseTag,
+        caseTag
+      );
+
+      if (!previouslyVerified) {
+        const currentCount =
+          Number(
+            localStorage.getItem(this.storage.count) || "0"
+          ) + 1;
+
+        localStorage.setItem(
+          this.storage.count,
+          String(currentCount)
+        );
+      }
+
+      this.state.commands.add("STANDING VERIFIED");
+      this.saveState();
+      this.updateStandingDisplay();
+      this.updateCounter();
+      this.updateLockedContent();
+      this.generateIdCard(subject, caseTag);
+
+      if (this.elements.downloadBtn) {
+        this.elements.downloadBtn.disabled = false;
+      }
+
+      this.writeTerminal(
+        `REG-U / SCAN / RESUME\n` +
+          `SUBJECT: ${subject.toUpperCase()}\n` +
+          `REFERENCE: ${caseTag.toUpperCase()}\n` +
+          `STATUS: STANDING VERIFIED\n` +
+          `CONSENT: VOLUNTARY\n` +
+          `STAMP: FILE ACCEPTED`
+      );
+
+      this.spawnStamp("STANDING VERIFIED");
+
+      this.showJurisdictionEvent({
+        title: "STANDING VERIFIED",
+        body:
+          `${subject.toUpperCase()} HAS BEEN RECOGNIZED.\n` +
+          "LIMITED ARCHIVE ACCESS GRANTED.",
+        stamp: "FILE ACCEPTED",
+        key: "first-standing-verification",
+      });
+
+      this.elements.loreBar.hidden = false;
+    },
+
+    restoreStanding() {
+      if (!this.state.standing) {
+        this.updateStandingDisplay();
+        this.renderCanvasPlaceholder();
+        return;
+      }
+
+      if (this.elements.subjectName) {
+        this.elements.subjectName.value =
+          this.state.subject;
+      }
+
+      if (this.elements.caseTag) {
+        this.elements.caseTag.value =
+          this.state.caseTag;
+      }
+
+      if (this.elements.consentCheck) {
+        this.elements.consentCheck.checked = true;
+      }
+
+      this.updateStandingDisplay();
+      this.generateIdCard(
+        this.state.subject,
+        this.state.caseTag
+      );
+
+      if (this.elements.downloadBtn) {
+        this.elements.downloadBtn.disabled = false;
+      }
+
+      this.writeTerminal(
+        `REG-U / SCAN / RESUME\n` +
+          `SUBJECT: ${this.state.subject.toUpperCase()}\n` +
+          `STATUS: STANDING VERIFIED\n` +
+          `STAMP: FILE ACCEPTED`
+      );
+
+      if (this.elements.loreBar) {
+        this.elements.loreBar.hidden = false;
+      }
+    },
+
+    resetStanding() {
+      const accepted = window.confirm(
+        "RESET LOCAL STANDING TOKEN?\n\n" +
+          "Theme and command discoveries will remain filed."
+      );
+
+      if (!accepted) return;
+
+      this.state.standing = false;
+      this.state.subject = "";
+      this.state.caseTag = "";
+
+      localStorage.removeItem(this.storage.standing);
+      localStorage.removeItem(this.storage.subject);
+      localStorage.removeItem(this.storage.caseTag);
+
+      if (this.elements.verifyForm) {
+        this.elements.verifyForm.reset();
+      }
+
+      if (this.elements.downloadBtn) {
+        this.elements.downloadBtn.disabled = true;
+      }
+
+      if (this.elements.loreBar) {
+        this.elements.loreBar.hidden = true;
+      }
+
+      this.updateStandingDisplay();
+      this.updateLockedContent();
+      this.renderCanvasPlaceholder();
+
+      this.writeTerminal(
+        "REG-U / RESET COMPLETE\n" +
+          "LOCAL STANDING TOKEN REMOVED.\n" +
+          "ARCHIVE MEMORY RETAINED."
+      );
+
+      this.saveState();
+    },
+
+    updateStandingDisplay() {
+      const theme =
+        this.themes[this.state.theme] ||
+        this.themes.registry;
+
+      if (this.elements.statusPill) {
+        this.elements.statusPill.textContent =
+          this.state.standing
+            ? theme.statusVerified
+            : theme.statusPending;
+
+        this.elements.statusPill.classList.toggle(
+          "verified",
+          this.state.standing
+        );
+      }
+
+      if (this.elements.brandSub) {
+        this.elements.brandSub.textContent =
+          `${theme.terminalPrefix} / INTAKE / SUBJECT STATUS: ` +
+          `${this.state.standing ? "VERIFIED" : "PENDING"}`;
+      }
+    },
+
+    showFormError(message) {
+      if (this.elements.formError) {
+        this.elements.formError.textContent = message;
+      }
+
+      this.spawnGlitch();
+    },
+
+    clearFormError() {
+      if (this.elements.formError) {
+        this.elements.formError.textContent = "";
+      }
+    },
+
+    updateCounter() {
+      if (!this.elements.counter) return;
+
+      this.elements.counter.textContent =
+        localStorage.getItem(this.storage.count) || "0";
+    },
+
+    processDateLocks() {
+      this.elements.playButtons.forEach((button) => {
+        const unlockValue = button.dataset.unlock;
+
+        if (!unlockValue) return;
+
+        const unlockDate = new Date(unlockValue);
+
+        if (Number.isNaN(unlockDate.getTime())) return;
+
+        button.dataset.dateUnlocked = String(
+          Date.now() >= unlockDate.getTime()
+        );
+      });
+    },
+
+    updateLockedContent() {
+      this.processDateLocks();
+
+      this.elements.playButtons.forEach((button) => {
+        const track = button.dataset.track;
+        const dateUnlocked =
+          button.dataset.dateUnlocked !== "false";
+
+        const standingUnlocked =
+          this.state.standing && dateUnlocked;
+
+        button.disabled = !standingUnlocked;
+        button.classList.toggle(
+          "unlocked",
+          standingUnlocked
+        );
+
+        if (standingUnlocked) {
+          button.textContent =
+            track === "intake"
+              ? "ACCESS EP I / INTAKE"
+              : track === "containment"
+                ? "ACCESS EP II / CONTAINMENT"
+                : "ACCESS EP III / SIGNATURE REQUIRED";
+        } else if (!this.state.standing) {
+          button.textContent =
+            "LOCKED — JURISDICTION NOT YET ESTABLISHED";
+        } else {
+          button.textContent =
+            "LOCKED — RELEASE DATE NOT RECOGNIZED";
+        }
+      });
+
+      document
+        .querySelectorAll("[data-requires-standing]")
+        .forEach((element) => {
+          const requiresStanding =
+            element.dataset.requiresStanding === "true";
+
+          if (requiresStanding) {
+            element.classList.toggle(
+              "content-locked",
+              !this.state.standing
+            );
+
+            element.setAttribute(
+              "aria-disabled",
+              String(!this.state.standing)
+            );
+          }
+        });
+
+      document
+        .querySelectorAll("[data-requires-command]")
+        .forEach((element) => {
+          const command = this.normalizeCommand(
+            element.dataset.requiresCommand
+          );
+
+          element.hidden =
+            !this.state.commands.has(command);
+        });
+    },
+
+    handleTrackClick(button) {
+      if (button.disabled) {
+        this.writeTerminal(
+          "AUDIO ACCESS DENIED.\n" +
+            "STANDING OR RELEASE AUTHORITY REQUIRED."
+        );
+
+        return;
+      }
+
+      const track = button.dataset.track;
+      const embed = document.querySelector(
+        `[data-embed="${CSS.escape(track)}"]`
+      );
+
+      if (!embed) return;
+
+      const messages = {
+        intake:
+          "EP I / INTAKE\nAUTHORIZED AUDIO EMBED PENDING.",
+        containment:
+          "EP II / CONTAINMENT\nAUTHORIZED AUDIO EMBED PENDING.",
+        signature:
+          "EP III / SIGNATURE REQUIRED\nAUTHORIZED AUDIO EMBED PENDING.",
+      };
+
+      embed.textContent =
+        messages[track] || "AUDIO RECORD AVAILABLE.";
+
+      embed.classList.add("embed-active");
+
+      this.writeTerminal(
+        `${String(track).toUpperCase()} AUDIO ACCESS GRANTED.`
+      );
+    },
+
+    generateIdCard(subject, caseTag) {
+      const canvas = this.elements.idCanvas;
+
+      if (!canvas) return;
+
+      const context = canvas.getContext("2d");
+
+      if (!context) return;
+
+      const themeName = this.state.theme;
+
+      const palettes = {
+        registry: {
+          background: "#090a09",
+          panel: "#11120f",
+          border: "#a58b49",
+          text: "#e2ded1",
+          muted: "#88867d",
+          accent: "#82e1ad",
+        },
+
+        silver: {
+          background: "#17191b",
+          panel: "#222629",
+          border: "#aeb4b8",
+          text: "#eef0f1",
+          muted: "#92989c",
+          accent: "#d4dade",
+        },
+
+        blackwater: {
+          background: "#050811",
+          panel: "#0a1020",
+          border: "#765ba8",
+          text: "#ece8f4",
+          muted: "#7d7891",
+          accent: "#c3a862",
+        },
+
+        bloomhouse: {
+          background: "#eee8df",
+          panel: "#f8f3eb",
+          border: "#b98c93",
+          text: "#272121",
+          muted: "#74696a",
+          accent: "#a58a47",
+        },
+
+        taa: {
+          background: "#0c0912",
+          panel: "#171020",
+          border: "#a77ad6",
+          text: "#f4eef9",
+          muted: "#93889c",
+          accent: "#d3b76c",
+        },
+
+        propagation: {
+          background: "#e7e8e9",
+          panel: "#f5f5f5",
+          border: "#161616",
+          text: "#101010",
+          muted: "#656565",
+          accent: "#a4252f",
+        },
+      };
+
+      const colors =
+        palettes[themeName] || palettes.registry;
+
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      context.fillStyle = colors.background;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      context.fillStyle = colors.panel;
+      context.fillRect(35, 35, 830, 470);
+
+      context.strokeStyle = colors.border;
+      context.lineWidth = 3;
+      context.strokeRect(35, 35, 830, 470);
+
+      context.strokeStyle = colors.border;
+      context.lineWidth = 1;
+      context.strokeRect(58, 58, 784, 424);
+
+      context.fillStyle = colors.text;
+      context.font = "bold 38px monospace";
+      context.fillText("ACCESS-NODE-009", 78, 112);
+
+      context.fillStyle = colors.muted;
+      context.font = "19px monospace";
+      context.fillText(
+        `${this.themes[themeName].label} / VERIFIED SUBJECT`,
+        80,
+        148
+      );
+
+      context.strokeStyle = colors.border;
+      context.beginPath();
+      context.moveTo(80, 175);
+      context.lineTo(820, 175);
+      context.stroke();
+
+      context.fillStyle = colors.muted;
+      context.font = "18px monospace";
+      context.fillText("LEGAL DESIGNATION", 80, 222);
+
+      context.fillStyle = colors.text;
+      context.font = "bold 33px monospace";
+      context.fillText(
+        subject.toUpperCase().slice(0, 28),
+        80,
+        263
+      );
+
+      context.fillStyle = colors.muted;
+      context.font = "18px monospace";
+      context.fillText("REGISTRY REFERENCE", 80, 317);
+
+      context.fillStyle = colors.text;
+      context.font = "bold 24px monospace";
+      context.fillText(
+        caseTag.toUpperCase().slice(0, 42),
+        80,
+        354
+      );
+
+      context.fillStyle = colors.accent;
+      context.font = "bold 24px monospace";
+      context.fillText("STANDING: VERIFIED", 80, 420);
+
+      context.strokeStyle = colors.accent;
+      context.lineWidth = 3;
+      context.strokeRect(600, 363, 210, 78);
+
+      context.fillStyle = colors.accent;
+      context.font = "bold 17px monospace";
+      context.textAlign = "center";
+      context.fillText("FILE ACCEPTED", 705, 410);
+      context.textAlign = "left";
+
+      context.fillStyle = colors.muted;
+      context.font = "14px monospace";
+      context.fillText(
+        `LOCAL TOKEN / ${this.makeToken(subject, caseTag)}`,
+        80,
+        468
+      );
+
+      this.drawCanvasNoise(context, canvas.width, canvas.height);
+    },
+
+    renderCanvasPlaceholder() {
+      const canvas = this.elements.idCanvas;
+
+      if (!canvas) return;
+
+      const context = canvas.getContext("2d");
+
+      if (!context) return;
+
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      context.fillStyle = "#090a09";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      context.strokeStyle = "#544b32";
+      context.lineWidth = 2;
+      context.strokeRect(35, 35, 830, 470);
+
+      context.fillStyle = "#4e4d48";
+      context.font = "bold 30px monospace";
+      context.fillText(
+        "IDENTIFICATION RECORD UNAVAILABLE",
+        90,
+        250
+      );
+
+      context.font = "18px monospace";
+      context.fillText(
+        "VERIFY STANDING TO GENERATE LOCAL CREDENTIAL",
+        90,
+        292
+      );
+    },
+
+    makeToken(subject, caseTag) {
+      const source = `${subject}|${caseTag}|009`;
+
+      let hash = 0;
+
+      for (let index = 0; index < source.length; index += 1) {
+        hash =
+          (hash << 5) -
+          hash +
+          source.charCodeAt(index);
+
+        hash |= 0;
+      }
+
+      return Math.abs(hash)
+        .toString(16)
+        .toUpperCase()
+        .padStart(8, "0");
+    },
+
+    drawCanvasNoise(context, width, height) {
+      context.save();
+      context.globalAlpha = 0.08;
+
+      for (let index = 0; index < 180; index += 1) {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        const size = Math.random() * 2 + 0.5;
+
+        context.fillStyle =
+          Math.random() > 0.5 ? "#ffffff" : "#000000";
+
+        context.fillRect(x, y, size, size);
+      }
+
+      context.restore();
+    },
+
+    downloadIdCard() {
+      const canvas = this.elements.idCanvas;
+
+      if (!canvas || !this.state.standing) return;
+
+      const link = document.createElement("a");
+
+      const safeName = this.state.subject
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "verified-subject";
+
+      link.download =
+        `access-node-009-${safeName}.png`;
+
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+
+      this.writeTerminal(
+        "LOCAL IDENTIFICATION RECORD EXPORTED."
+      );
+    },
+
+    writeTerminal(text) {
+      if (!this.elements.terminalOut) return;
+
+      this.elements.terminalOut.textContent = text;
+    },
+
+    appendTerminal(text, type = "system") {
+      if (!this.elements.terminalOut) return;
+
+      const current =
+        this.elements.terminalOut.textContent.trim();
+
+      const divider = current ? "\n\n" : "";
+
+      this.elements.terminalOut.textContent =
+        `${current}${divider}${text}`;
+
+      this.elements.terminalOut.dataset.lastType = type;
+
+      const terminal =
+        this.elements.terminalOut.closest(".terminal");
+
+      if (terminal) {
+        terminal.scrollTop = terminal.scrollHeight;
+      }
+    },
+
+    clearTerminal() {
+      if (this.elements.terminalOut) {
+        this.elements.terminalOut.textContent = "";
+      }
+    },
+
+    beginLoreRotation() {
+      window.clearInterval(this.state.loreTimer);
+
+      const updateLore = () => {
+        const themeLore =
+          this.lore[this.state.theme] ||
+          this.lore.registry;
+
+        const next =
+          themeLore[
+            Math.floor(Math.random() * themeLore.length)
+          ];
+
+        if (this.elements.loreText) {
+          this.elements.loreText.textContent = next;
+        }
+      };
+
+      updateLore();
+
+      this.state.loreTimer = window.setInterval(
+        updateLore,
+        8500
+      );
+    },
+
+    showJurisdictionEvent(event) {
+      if (!this.elements.jurisdictionEvent) return;
+
+      if (
+        event.key &&
+        this.state.jurisdictionSeen.has(event.key)
+      ) {
+        return;
+      }
+
+      if (event.key) {
+        this.state.jurisdictionSeen.add(event.key);
+        this.saveState();
+      }
+
+      this.elements.jurisdictionTitle.textContent =
+        event.title || "JURISDICTION EVENT";
+
+      this.elements.jurisdictionBody.textContent =
+        event.body || "";
+
+      this.elements.jurisdictionStamp.textContent =
+        event.stamp || "FILED";
+
+      this.elements.jurisdictionEvent.hidden = false;
+      this.elements.jurisdictionEvent.setAttribute(
+        "aria-hidden",
+        "false"
+      );
+
+      window.setTimeout(() => {
+        this.elements.jurisdictionEvent.classList.add(
+          "is-visible"
+        );
+      }, 20);
+
+      window.setTimeout(() => {
+        this.closeJurisdictionEvent();
+      }, 5200);
+    },
+
+    closeJurisdictionEvent() {
+      const overlay = this.elements.jurisdictionEvent;
+
+      if (!overlay || overlay.hidden) return;
+
+      overlay.classList.remove("is-visible");
+
+      window.setTimeout(() => {
+        overlay.hidden = true;
+        overlay.setAttribute("aria-hidden", "true");
+      }, 350);
+    },
+
+    spawnThemeTransition(themeName) {
+      if (!this.elements.fxLayer) return;
+
+      const effect = document.createElement("div");
+      effect.className = `theme-transition theme-transition--${themeName}`;
+      effect.textContent =
+        this.themes[themeName].label;
+
+      this.elements.fxLayer.appendChild(effect);
+
+      window.setTimeout(() => {
+        effect.remove();
+      }, 1600);
+    },
+
+    spawnStamp(text) {
+      if (!this.elements.fxLayer) return;
+
+      const stamp = document.createElement("div");
+      stamp.className = "fx-stamp";
+      stamp.textContent = text;
+
+      stamp.style.left = `${12 + Math.random() * 66}%`;
+      stamp.style.top = `${20 + Math.random() * 50}%`;
+      stamp.style.transform =
+        `rotate(${Math.random() * 10 - 5}deg)`;
+
+      this.elements.fxLayer.appendChild(stamp);
+
+      window.setTimeout(() => {
+        stamp.remove();
+      }, 2400);
+    },
+
+    spawnGlitch() {
+      if (!this.elements.fxLayer) return;
+
+      const glitch = document.createElement("div");
+      glitch.className = "fx-glitch";
+
+      this.elements.fxLayer.appendChild(glitch);
+
+      window.setTimeout(() => {
+        glitch.remove();
+      }, 450);
+    },
+
+    spawnAmbientGeometry() {
+      if (!this.elements.fxLayer) return;
+
+      for (let index = 0; index < 4; index += 1) {
+        const seam = document.createElement("div");
+        seam.className = "fx-seam";
+
+        seam.style.left = `${15 + Math.random() * 70}%`;
+        seam.style.top = `${10 + Math.random() * 80}%`;
+        seam.style.height = `${80 + Math.random() * 180}px`;
+        seam.style.transform =
+          `rotate(${Math.random() * 30 - 15}deg)`;
+
+        this.elements.fxLayer.appendChild(seam);
+      }
+    },
+  };
+
+  REGISTRY.init();
+
+  window.ACCESS_NODE_009 = REGISTRY;
+});
