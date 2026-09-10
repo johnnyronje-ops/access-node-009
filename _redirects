@@ -1,0 +1,8 @@
+/files /files/index.html 200
+/files/ /files/index.html 200
+/files/aoi-miyu /files/aoi-miyu/index.html 200
+/files/aoi-miyu/ /files/aoi-miyu/index.html 200
+/files/aoi-miyu/tape-01 /files/aoi-miyu/tape-01/index.html 200
+/files/aoi-miyu/tape-01/ /files/aoi-miyu/tape-01/index.html 200
+/tape-01 /files/aoi-miyu/tape-01/index.html 302
+/tape-01/ /files/aoi-miyu/tape-01/index.html 302
